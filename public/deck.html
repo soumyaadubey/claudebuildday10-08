@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TrialFinder · Slides</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%230E6B66'/%3E%3Cpath d='M9 17l4.5 4.5L23 11' stroke='%23fff' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #FBF6EE; --surface: #fff; --surface-warm: #FFF9F1; --ink: #1E2430; --muted: #4A5160; --border: #E2D7C7;
+    --primary: #0E6B66; --primary-soft: #E3F1EF; --accent: #B4532A; --accent-soft: #F8E3D6;
+    --likely-bg: #DDF3E4; --likely-ink: #14532D; --likely-border: #7FC296;
+    --possible-bg: #FDEFD3; --possible-ink: #6B3B00; --possible-border: #E2B25C;
+    --unlikely-bg: #EDEBE7; --unlikely-ink: #3A3A40; --unlikely-border: #C4BFB7;
+    --shadow: 0 2px 4px rgba(30,36,48,.06), 0 10px 30px rgba(30,36,48,.08);
+    --s: 1;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #EFE7DA; overflow: hidden; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif; color: var(--ink); }
+  svg.icon { width: 1.1em; height: 1.1em; flex: none; vertical-align: -0.18em; }
+  :focus-visible { outline: 4px solid #1D4ED8; outline-offset: 4px; border-radius: 8px; }
+
+  /* ---------- Stage: fixed 1600x900 slides scaled to the window ---------- */
+  .slide {
+    position: absolute; left: 50%; top: 50%; width: 1600px; height: 900px;
+    transform: translate(-50%, -50%) scale(var(--s));
+    background: var(--bg); padding: 80px 110px; overflow: hidden;
+    opacity: 0; visibility: hidden; transition: opacity .35s ease, visibility .35s;
+    display: flex; flex-direction: column; line-height: 1.4;
+  }
+  .slide.active { opacity: 1; visibility: visible; }
+  .slide::after { /* soft corner glow for warmth */
+    content: ""; position: absolute; right: -220px; top: -220px; width: 620px; height: 620px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(180,83,42,.10), rgba(180,83,42,0) 70%); pointer-events: none;
+  }
+  .slide-foot { position: absolute; left: 110px; right: 110px; bottom: 34px; display: flex; justify-content: space-between; color: var(--muted); font-size: 20px; }
+  .slide-foot .mini-brand { display: flex; gap: 10px; align-items: center; font-weight: 700; color: var(--ink); }
+  .notes { display: none; }
+
+  /* ---------- Type ---------- */
+  .eyebrow { text-transform: uppercase; letter-spacing: .14em; font-weight: 800; font-size: 20px; color: var(--accent); margin: 0 0 18px; }
+  h1 { font-size: 104px; line-height: 1.02; margin: 0; letter-spacing: -.025em; }
+  h2 { font-size: 64px; line-height: 1.1; margin: 0 0 36px; letter-spacing: -.02em; max-width: 1250px; }
+  h3 { font-size: 34px; margin: 0 0 10px; line-height: 1.2; }
+  p { margin: 0; }
+  .lead { font-size: 40px; color: var(--muted); line-height: 1.3; }
+  .body { font-size: 28px; color: var(--muted); }
+  .underline { width: 140px; height: 8px; border-radius: 8px; background: var(--accent); margin: 34px 0; }
+  .hl { color: var(--primary); }
+  .small { font-size: 22px; color: var(--muted); }
+
+  /* ---------- Reusable pieces (borrowed from the app) ---------- */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 22px; box-shadow: var(--shadow); padding: 30px 34px; }
+  .badge { display: inline-flex; align-items: center; gap: 10px; padding: 6px 18px; border-radius: 999px; font-weight: 800; font-size: 22px; border: 3px solid; }
+  .badge-likely { background: var(--likely-bg); color: var(--likely-ink); border-color: var(--likely-border); }
+  .badge-possible { background: var(--possible-bg); color: var(--possible-ink); border-color: var(--possible-border); }
+  .badge-unlikely { background: var(--unlikely-bg); color: var(--unlikely-ink); border-color: var(--unlikely-border); }
+  .tag { display: inline-flex; align-items: center; gap: 8px; padding: 4px 14px; border-radius: 999px; font-size: 19px; font-weight: 650; background: var(--primary-soft); color: #0B4F4B; }
+  .tag-sample { background: #FFF1C2; color: #5C4200; }
+  .trial { border-left: 10px solid var(--likely-border); }
+  .trial.possible { border-left-color: var(--possible-border); }
+  .trial.unlikely { border-left-color: var(--unlikely-border); }
+  .trial-title { font-size: 28px; font-weight: 750; margin: 14px 0 6px; line-height: 1.25; }
+  .trial-meta { font-size: 21px; color: var(--muted); display: flex; gap: 22px; flex-wrap: wrap; }
+  .trial-meta span { display: inline-flex; gap: 6px; align-items: center; }
+  .btn { display: inline-flex; align-items: center; gap: 10px; border-radius: 999px; padding: 12px 24px; font-weight: 700; font-size: 21px; border: 3px solid var(--primary); }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-secondary { background: #fff; color: var(--primary); }
+  .row { display: flex; gap: 40px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 26px; }
+  .icon-dot { width: 72px; height: 72px; border-radius: 22px; display: grid; place-items: center; background: var(--primary-soft); color: var(--primary); margin-bottom: 22px; }
+  .icon-dot svg { width: 38px; height: 38px; }
+  .icon-dot.warm { background: var(--accent-soft); color: var(--accent); }
+
+  /* ---------- Slide-specific ---------- */
+  .title-wrap { display: grid; grid-template-columns: 1.15fr .85fr; gap: 60px; align-items: center; flex: 1; padding-bottom: 40px; }
+  .title-wrap h1 { font-size: 88px; }
+  .title-wrap .underline { margin: 28px 0; }
+  .brand-row { display: flex; align-items: center; gap: 22px; margin-bottom: 40px; }
+  .brand-row svg { width: 96px; height: 96px; }
+  .brand-row span { font-size: 44px; font-weight: 800; letter-spacing: -.01em; }
+  .stack { display: flex; flex-direction: column; gap: 22px; }
+  .stack .card:nth-child(2) { margin-left: 40px; opacity: .92; }
+  .stack .card:nth-child(3) { margin-left: 80px; opacity: .8; }
+
+  .persona { display: grid; grid-template-columns: 380px 1fr; gap: 70px; align-items: center; flex: 1; }
+  .avatar { width: 380px; height: 380px; border-radius: 50%; background: linear-gradient(160deg, #F4C9AE, #E7A783); display: grid; place-items: center; box-shadow: var(--shadow); position: relative; }
+  .avatar svg { width: 230px; height: 230px; color: #fff; }
+  .avatar .lang { position: absolute; bottom: 18px; right: -8px; background: #fff; border: 3px solid var(--border); border-radius: 999px; padding: 8px 20px; font-weight: 800; font-size: 26px; color: var(--accent); }
+  .facts { list-style: none; padding: 0; margin: 34px 0 0; display: flex; flex-direction: column; gap: 18px; }
+  .facts li { display: flex; gap: 18px; align-items: center; font-size: 32px; }
+  .facts li svg { width: 40px; height: 40px; color: var(--accent); flex: none; }
+  .synthetic { margin-top: 34px; font-size: 21px; color: var(--muted); font-style: italic; }
+
+  .jargon { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 19px; line-height: 1.5; color: #3B3F48; background: #fff; border: 1px dashed #C9BBA5; border-radius: 16px; padding: 22px 26px; white-space: pre-line; }
+  .problem-card h3 { display: flex; gap: 14px; align-items: center; }
+  .problem-card .num { width: 54px; height: 54px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-size: 28px; font-weight: 800; flex: none; }
+
+  .flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin-top: 10px; position: relative; }
+  .flow .step { padding: 0 26px; position: relative; }
+  .flow .step:not(:last-child)::after { content: ""; position: absolute; top: 44px; right: -14px; width: 28px; height: 28px; border-top: 5px solid var(--border); border-right: 5px solid var(--border); transform: rotate(45deg); }
+  .flow .n { width: 88px; height: 88px; border-radius: 50%; background: var(--primary); color: #fff; display: grid; place-items: center; font-size: 40px; font-weight: 800; margin-bottom: 26px; }
+  .flow .step:nth-child(1) .n { background: var(--accent); }
+  .flow h3 { font-size: 36px; }
+  .flow p { font-size: 25px; color: var(--muted); }
+  .flow-safety { margin-top: 56px; display: flex; gap: 18px; align-items: center; background: #fff; border: 2px solid var(--border); border-radius: 18px; padding: 20px 28px; font-size: 25px; }
+  .flow-safety svg { width: 38px; height: 38px; color: var(--accent); }
+
+  .summary-bar { background: #fff; border: 1px solid var(--border); border-left: 10px solid var(--primary); border-radius: 18px; padding: 20px 28px; box-shadow: var(--shadow); margin-bottom: 22px; }
+  .summary-bar strong { font-size: 30px; }
+  .summary-bar p { font-size: 21px; color: var(--muted); margin-top: 4px; }
+  .dash { display: grid; grid-template-columns: 1fr 420px; gap: 46px; flex: 1; min-height: 0; }
+  .callouts { display: flex; flex-direction: column; gap: 26px; justify-content: center; }
+  .callout { display: flex; gap: 18px; align-items: flex-start; font-size: 26px; }
+  .callout svg { width: 40px; height: 40px; color: var(--primary); flex: none; margin-top: 2px; }
+  .plain { font-size: 22px; margin: 10px 0 0; color: var(--ink); line-height: 1.45; }
+
+  .readalong { background: var(--surface-warm); border: 2px solid #EAD9C2; border-radius: 18px; padding: 24px 28px; }
+  .readalong .label { font-weight: 800; font-size: 20px; color: var(--muted); display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+  .readalong p.t { font-size: 27px; line-height: 1.45; }
+  .wave { display: flex; gap: 6px; align-items: center; height: 44px; margin-top: 18px; }
+  .wave i { width: 7px; border-radius: 4px; background: var(--primary); display: block; animation: wave 1.1s ease-in-out infinite; }
+  @keyframes wave { 0%,100% { transform: scaleY(.35); } 50% { transform: scaleY(1); } }
+  .langs { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 26px; }
+  .langs span { background: #fff; border: 2px solid var(--border); border-radius: 999px; padding: 8px 22px; font-size: 26px; font-weight: 650; }
+  .langs span.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+  .safety-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 50px; flex: 1; min-height: 0; }
+  .crisis-mini { border-radius: 26px; background: linear-gradient(180deg, #E6F2EF 0%, #F6F1FA 100%); padding: 46px 40px; text-align: center; box-shadow: var(--shadow); border: 1px solid var(--border); display: flex; flex-direction: column; justify-content: center; }
+  .crisis-mini svg.heart { width: 64px; height: 64px; color: #0B5C57; margin: 0 auto 18px; }
+  .crisis-mini h3 { font-size: 38px; margin-bottom: 14px; }
+  .crisis-mini p { font-size: 25px; }
+  .crisis-mini .b { display: inline-flex; gap: 10px; align-items: center; background: #0B5C57; color: #fff; border-radius: 999px; padding: 14px 34px; font-weight: 800; font-size: 26px; margin: 24px auto 18px; }
+  .crisis-mini .em { background: #fff; border-radius: 12px; padding: 10px 18px; font-weight: 700; font-size: 22px; display: inline-block; }
+  .rules { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 26px; justify-content: center; }
+  .rules li { display: flex; gap: 20px; align-items: flex-start; }
+  .rules li svg { width: 44px; height: 44px; color: var(--primary); flex: none; }
+  .rules strong { display: block; font-size: 29px; }
+  .rules span { font-size: 23px; color: var(--muted); }
+
+  .hitl { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; align-items: stretch; margin-top: 10px; }
+  .hitl .card { padding: 26px; display: flex; flex-direction: column; gap: 14px; position: relative; }
+  .hitl .who { font-size: 18px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+  .hitl .who.p { color: var(--accent); } .hitl .who.c { color: var(--primary); }
+  .hitl h3 { font-size: 29px; }
+  .hitl p { font-size: 22px; color: var(--muted); }
+  .check { display: flex; gap: 12px; align-items: flex-start; font-size: 20px; background: #fff; border: 2px solid var(--border); border-radius: 12px; padding: 12px; }
+  .check i { width: 26px; height: 26px; border-radius: 6px; background: var(--primary); color: #fff; display: grid; place-items: center; font-style: normal; font-weight: 800; flex: none; font-size: 18px; }
+  .pill { display: flex; gap: 12px; align-items: center; border-radius: 14px; padding: 14px 16px; font-weight: 700; font-size: 21px; }
+  .pill.sent { background: #EAF1FB; color: #1E3A6E; border: 2px solid #BFD3F2; }
+  .pill.ok { background: var(--likely-bg); color: var(--likely-ink); border: 2px solid var(--likely-border); }
+  .never { margin-top: 44px; font-size: 30px; text-align: center; }
+  .never strong { color: var(--accent); }
+
+  table.fallbacks { width: 100%; border-collapse: separate; border-spacing: 0; background: #fff; border-radius: 20px; overflow: hidden; box-shadow: var(--shadow); font-size: 25px; }
+  .fallbacks th { text-align: left; background: var(--primary); color: #fff; padding: 18px 26px; font-size: 22px; letter-spacing: .04em; }
+  .fallbacks td { padding: 18px 26px; border-top: 1px solid var(--border); vertical-align: top; }
+  .fallbacks td:first-child { font-weight: 700; width: 38%; }
+  .fallbacks tr:nth-child(even) td { background: #FFFCF7; }
+
+  .arch { display: grid; grid-template-columns: 300px 120px 400px 120px 1fr; align-items: center; flex: 1; }
+  .arch .box { background: #fff; border: 2px solid var(--border); border-radius: 22px; padding: 26px 28px; box-shadow: var(--shadow); }
+  .arch .box h3 { font-size: 30px; }
+  .arch .box p { font-size: 21px; color: var(--muted); }
+  .arch .server { border: 4px solid var(--primary); }
+  .arch .arrow { height: 6px; background: var(--border); position: relative; margin: 0 14px; border-radius: 3px; }
+  .arch .arrow::after { content: ""; position: absolute; right: -4px; top: -11px; border-left: 20px solid var(--border); border-top: 14px solid transparent; border-bottom: 14px solid transparent; }
+  .arch .ext { display: flex; flex-direction: column; gap: 20px; }
+  .arch .ext .box { padding: 20px 26px; }
+  .arch .key { display: inline-flex; gap: 8px; align-items: center; margin-top: 12px; font-size: 19px; font-weight: 700; color: var(--primary); background: var(--primary-soft); border-radius: 999px; padding: 6px 14px; }
+  .stats { display: flex; gap: 22px; margin-top: 34px; }
+  .stats div { background: #fff; border: 2px solid var(--border); border-radius: 16px; padding: 14px 24px; font-size: 22px; color: var(--muted); }
+  .stats strong { color: var(--ink); font-size: 26px; margin-right: 6px; }
+
+  .demo-grid { display: grid; grid-template-columns: 1fr 520px; gap: 60px; flex: 1; align-items: center; }
+  .demo-steps { list-style: none; padding: 0; margin: 0; counter-reset: s; display: flex; flex-direction: column; gap: 20px; }
+  .demo-steps li { counter-increment: s; display: flex; gap: 22px; align-items: center; font-size: 30px; }
+  .demo-steps li::before { content: counter(s); width: 58px; height: 58px; border-radius: 50%; background: var(--primary); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 28px; flex: none; }
+  .url-card { text-align: center; padding: 44px 36px; }
+  .url-card .small { margin-bottom: 14px; }
+  .url { font-size: 27px; font-weight: 800; color: var(--primary); word-break: break-all; line-height: 1.3; }
+
+  .next-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .next-grid .card { padding: 24px 30px; }
+  .next-grid .icon-dot { width: 58px; height: 58px; border-radius: 18px; margin-bottom: 14px; }
+  .next-grid .icon-dot svg { width: 30px; height: 30px; }
+  .next-grid .card h3 { font-size: 29px; }
+  .next-grid .card p { font-size: 22px; color: var(--muted); }
+
+  .end { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+  .end .brand-row { justify-content: center; }
+  .disclaimer { margin-top: 50px; max-width: 1100px; font-size: 27px; font-weight: 650; background: #F3ECE1; border: 2px solid var(--border); border-radius: 18px; padding: 22px 34px; }
+
+  /* ---------- Controls ---------- */
+  .controls { position: fixed; right: 18px; bottom: 16px; display: flex; gap: 8px; align-items: center; z-index: 20; font-size: 15px; }
+  .controls button { font: inherit; background: rgba(255,255,255,.92); border: 1px solid var(--border); border-radius: 999px; min-width: 44px; height: 44px; padding: 0 14px; cursor: pointer; color: var(--ink); font-weight: 650; }
+  .controls button:hover { background: #fff; }
+  .counter { background: rgba(255,255,255,.92); border: 1px solid var(--border); border-radius: 999px; padding: 10px 14px; font-variant-numeric: tabular-nums; }
+  .progress { position: fixed; left: 0; top: 0; height: 5px; background: var(--primary); z-index: 20; transition: width .35s ease; }
+  .notes-panel { position: fixed; left: 18px; right: 18px; bottom: 72px; max-height: 38vh; overflow: auto; background: rgba(30,36,48,.95); color: #fff; border-radius: 16px; padding: 18px 24px; font-size: 18px; line-height: 1.55; z-index: 20; }
+  .notes-panel h2 { font-size: 14px; letter-spacing: .12em; text-transform: uppercase; color: #F2B48C; margin: 0 0 8px; max-width: none; }
+  .help-hint { position: fixed; left: 18px; bottom: 16px; font-size: 14px; color: var(--muted); background: rgba(255,255,255,.85); border-radius: 999px; padding: 10px 16px; z-index: 20; }
+
+  .controls, .help-hint { transition: opacity .3s; }
+  body.idle .controls:not(:focus-within), body.idle .help-hint { opacity: 0; pointer-events: none; }
+  body.idle { cursor: none; }
+
+  @media (prefers-reduced-motion: reduce) { .slide, .progress { transition: none; } .wave i { animation: none; } }
+
+  /* ---------- Print / Save as PDF: one slide per page ---------- */
+  @media print {
+    @page { size: 1600px 900px; margin: 0; }
+    html, body { overflow: visible; height: auto; background: none; }
+    .slide { position: relative; left: 0; top: 0; transform: none; opacity: 1; visibility: visible; page-break-after: always; break-after: page; }
+    .controls, .progress, .notes-panel, .help-hint { display: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Icon sprite -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M7 12.5l3.2 3.2L17 9" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-half" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12 3a9 9 0 010 18z" fill="currentColor"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M7.5 12h9" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a7 7 0 00-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 00-7-7zm0 9.5A2.5 2.5 0 1112 6.5a2.5 2.5 0 010 5z"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path fill="currentColor" d="M12 3l9 8h-3v9h-5v-6h-2v6H6v-9H3z"/></symbol>
+    <symbol id="i-speaker" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3z"/><path d="M16 8.5a5 5 0 010 7M18.5 6a8.5 8.5 0 010 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path fill="currentColor" d="M2 21l21-9L2 3v7l15 2-15 2z"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.3C.9 8.3 3 4.5 6.7 4.5c2 0 3.5 1.1 4.3 2.4.8-1.3 2.3-2.4 4.3-2.4 3.7 0 5.8 3.8 4.3 7.2C19.5 16.4 12 21 12 21z"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 006.6 6.6l2.2-2.2a1 1 0 011-.25 11.4 11.4 0 003.6.57 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.57a1 1 0 01-.25 1z"/></symbol>
+    <symbol id="i-pill" viewBox="0 0 24 24"><rect x="2.5" y="8" width="19" height="8" rx="4" transform="rotate(-35 12 12)" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M9.2 7.9l5.6 8.2" stroke="currentColor" stroke-width="2.2"/></symbol>
+    <symbol id="i-doctor" viewBox="0 0 24 24"><circle cx="12" cy="7" r="4" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M12 14v4" stroke="currentColor" stroke-width="2.2"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M2.5 12h19M12 2.5c3 3 3 16 0 19M12 2.5c-3 3-3 16 0 19" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+    <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 2.5h8l4.5 4.5v14.5H6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 11h6M9 15h6M14 2.5V7h4.5" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2.5l8 3v6c0 5-3.4 8.8-8 10-4.6-1.2-8-5-8-10v-6z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M8.5 12l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="currentColor"/></symbol>
+    <symbol id="i-q" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M9.5 9.5a2.5 2.5 0 114 2c-1 .7-1.5 1.2-1.5 2.5M12 17v.3" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"/></symbol>
+    <symbol id="i-person" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4.5" fill="currentColor"/><path d="M3 22c0-5 4-8 9-8s9 3 9 8z" fill="currentColor"/></symbol>
+    <symbol id="i-logo" viewBox="0 0 40 40"><circle cx="20" cy="20" r="19" fill="#0E6B66"/><circle cx="18" cy="18" r="8.5" fill="none" stroke="#FBF6EE" stroke-width="3"/><path d="M24.5 24.5l6 6" stroke="#FBF6EE" stroke-width="3.4" stroke-linecap="round"/><path d="M14.5 18.2l2.6 2.6 4.6-5" stroke="#F2B48C" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </defs>
+</svg>
+
+<div class="progress" id="progress"></div>
+<main id="deck" aria-roledescription="slide deck" aria-label="TrialFinder presentation">
+
+  <!-- 1. Title -->
+  <section class="slide" aria-label="Title">
+    <div class="title-wrap">
+      <div>
+        <div class="brand-row"><svg aria-hidden="true"><use href="#i-logo"/></svg><span>TrialFinder</span></div>
+        <h1>Research studies near you, <span class="hl">in plain language.</span></h1>
+        <div class="underline"></div>
+        <p class="lead">Find clinical trials you may be a good fit for, safely and in your own language.</p>
+      </div>
+      <div class="stack" aria-hidden="true">
+        <div class="card trial">
+          <span class="badge badge-likely"><svg class="icon"><use href="#i-check"/></svg> May be a good fit</span>
+          <div class="trial-title">Spanish-language digital CBT app for depression</div>
+          <div class="trial-meta"><span><svg class="icon"><use href="#i-pin"/></svg> 1.3 miles</span><span><svg class="icon"><use href="#i-home"/></svg> At home</span></div>
+        </div>
+        <div class="card trial possible">
+          <span class="badge badge-possible"><svg class="icon"><use href="#i-half"/></svg> Possible fit</span>
+          <div class="trial-title">Add-on medicine for major depression</div>
+        </div>
+        <div class="card trial unlikely">
+          <span class="badge badge-unlikely"><svg class="icon"><use href="#i-minus"/></svg> Probably not</span>
+          <div class="trial-title">Treatment for depression after childbirth</div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-foot"><span>Claude Build Day · October 8, 2026</span><span>Built with Claude Opus 5.5 · ElevenLabs · ClinicalTrials.gov</span></div>
+    <div class="notes">Hi, we built TrialFinder. It helps patients find clinical trials near them that they may be a good fit for, explains each one in plain language, and lets them listen in their own language. Keep this to one sentence and move on.</div>
+  </section>
+
+  <!-- 2. Persona -->
+  <section class="slide" aria-label="Meet Maria">
+    <p class="eyebrow">Who it's for</p>
+    <div class="persona">
+      <div class="avatar" aria-hidden="true"><svg><use href="#i-person"/></svg><span class="lang">Español</span></div>
+      <div>
+        <h2 style="margin-bottom:0">Meet Maria.</h2>
+        <ul class="facts">
+          <li><svg aria-hidden="true"><use href="#i-pin"/></svg> 42, lives in Queens, New York City</li>
+          <li><svg aria-hidden="true"><use href="#i-pill"/></svg> Depression that hasn't improved on two medicines</li>
+          <li><svg aria-hidden="true"><use href="#i-doctor"/></svg> Her doctor has never mentioned clinical trials</li>
+          <li><svg aria-hidden="true"><use href="#i-globe"/></svg> More comfortable reading and speaking Spanish</li>
+        </ul>
+        <p class="synthetic">Maria is a synthetic persona. All patient data in this project is invented.</p>
+      </div>
+    </div>
+    <div class="slide-foot"><span class="mini-brand"><svg class="icon" aria-hidden="true"><use href="#i-logo"/></svg> TrialFinder</span><span>2</span></div>
+    <div class="notes">Maria is who we designed for. Her depression hasn't gotten better after two medicines. There may be research studies a few subway stops away that are looking for exactly her, but nobody has told her, and she isn't a medical expert. She's also more comfortable in Spanish.</div>
+  </section>
+
+  <!-- 3. Problem -->
+  <section class="slide" aria-label="The problem">
+    <p class="eyebrow">The problem</p>
+    <h2>Trials exist. Patients like Maria rarely hear about them, and the listings aren't written for them.</h2>
+    <div class="grid-3" style="flex:1; min-height:0">
+      <div class="card problem-card">
+        <h3><span class="num">1</span> Hard to find</h3>
+        <p class="body">No one points her to studies. Searching registries means knowing the right medical terms first.</p>
+      </div>
+      <div class="card problem-card">
+        <h3><span class="num">2</span> Written for researchers</h3>
+        <p class="jargon">Exclusion Criteria:
+* Personal or close family history of schizophrenia or bipolar I disorder
+* Inadequate response to ≥2 antidepressants at adequate dose and duration…</p>
+      </div>
+      <div class="card problem-card">
+        <h3><span class="num">3</span> English only</h3>
+        <p class="body">Listings, summaries and next steps assume she reads medical English comfortably.</p>
+      </div>
+    </div>
+    <div class="slide-foot"><span class="mini-brand"><svg class="icon" aria-hidden="true"><use href="#i-logo"/></svg> TrialFinder</span><span>3</span></div>
+    <div class="notes">Three barriers. One: she has to know trials exist and what to search for. Two: the listings are written for researchers. This is what eligibility criteria actually look like. Three: almost all of it is in medical English.</div>
+  </section>
+
+  <!-- 4. How it works -->
+  <section class="slide" aria-label="How it works">
+    <p class="eyebrow">How it works</p>
+    <h2>Four steps, from "I don't know where to start" to "someone will call me."</h2>
+    <div class="flow">
+      <div class="step"><div class="n">1</div><h3>Tell us</h3><p>Condition, age, ZIP, how far you can travel, and your health in your own words.</p></div>
+      <div class="step"><div class="n">2</div><h3>We search</h3><p>Live ClinicalTrials.gov results: recruiting studies within your distance.</p></div>
+      <div class="step"><div class="n">3</div><h3>We explain</h3><p>Claude reads each study's criteria and writes a plain summary, why it may or may not fit, and questions to ask.</p></div>
+      <div class="step"><div class="n">4</div><h3>You decide</h3><p>Listen in 7 languages. Contact a study only if you choose, with consent.</p></div>
+    </div>
+    <div class="flow-safety"><svg aria-hidden="true"><use href="#i-heart"/></svg><span><strong>Before any of this:</strong> a safety check reads what you wrote. If you might be in crisis, we stop and connect you to 988.</span></div>
+    <div class="slide-foot"><span class="mini-brand"><svg class="icon" aria-hidden="true"><use href="#i-logo"/></svg> TrialFinder</span><span>4</span></div>
+    <div class="notes">Here's the flow. The patient tells us about themselves, including in their own words. We search ClinicalTrials.gov live for recruiting studies near them. Claude Opus reads each study's eligibility criteria against their profile. Then they can listen in their language and, if they want, contact the study. And before any of that, a safety check runs first.</div>
+  </section>
+
+  <!-- 5. Dashboard -->
+  <section class="slide" aria-label="Results dashboard">
+    <p class="eyebrow">What Maria sees</p>
+    <h2 style="margin-bottom:26px">Plain answers, with honest uncertainty.</h2>
+    <div class="dash">
+      <div>
+        <div class="summary-bar"><strong>15 recruiting trials within 10 miles; 4 may be a good fit</strong><p>Near Queens (11368). Sorted by fit, then distance.</p></div>
+        <div class="card trial" style="padding:24px 30px">
+          <div style="display:flex; gap:12px; flex-wrap:wrap"><span class="badge badge-likely"><svg class="icon"><use href="#i-check"/></svg> May be a good fit</span><span class="tag"><svg class="icon"><use href="#i-home"/></svg> Remote or at-home parts mentioned</span></div>
+          <div class="trial-title">Spanish-Language Digital CBT App for Depression</div>
+          <div class="trial-meta"><span><svg class="icon"><use href="#i-pin"/></svg> 1.3 miles away</span><span>Elmhurst, Queens</span></div>
+          <p class="plain">This study tests a phone app that teaches coping skills in Spanish. You would use it at home for 8 weeks, with a short weekly call from a coach. You can get up to $100 in gift cards for completing surveys.</p>
+          <div style="display:flex; gap:14px; margin-top:18px"><span class="btn btn-secondary"><svg class="icon"><use href="#i-speaker"/></svg> Listen</span><span class="btn btn-primary"><svg class="icon"><use href="#i-send"/></svg> Contact this study</span></div>
+        </div>
+        <p class="small" style="margin-top:14px">Illustrative output on sample data.</p>
+      </div>
+      <div class="callouts">
+        <div class="callout"><svg aria-hidden="true"><use href="#i-eye"/></svg><span><strong>Badges use an icon and text,</strong> never color alone.</span></div>
+        <div class="callout"><svg aria-hidden="true"><use href="#i-doc"/></svg><span><strong>Written for a 6th-grade reading level:</strong> what it tests, visits, length, payment.</span></div>
+        <div class="callout"><svg aria-hidden="true"><use href="#i-q"/></svg><span><strong>"Why" shows reasons for, against, and unknowns,</strong> plus 3 questions to ask.</span></div>
+        <div class="callout"><svg aria-hidden="true"><use href="#i-search"/></svg><span><strong>Filter</strong> by fit, distance, and remote-friendly.</span></div>
+      </div>
+    </div>
+    <div class="slide-foot"><span class="mini-brand"><svg class="icon" aria-hidden="true"><use href="#i-logo"/></svg> TrialFinder</span><span>5</span></div>
+    <div class="notes">This is what Maria gets. A summary at the top, then cards sorted by fit and distance. Each card says in plain words what the study is, what she'd do, and whether there's payment. If the listing doesn't say something, we don't guess. It goes into "things the study team would check." Badges always have an icon and words, not just color.</div>
+  </section>
+
+  <!-- 6. Listen -->
+  <section class="slide" aria-label="Listen in your language">
+    <p class="eyebrow">Translate and listen</p>
+    <h2>Hear it in your language, and read along.</h2>
+    <div class="grid-2" style="flex:1; min-height:0; align-items:start">
+      <div class="readalong">
+        <div class="label"><svg class="icon" aria-hidden="true"><use href="#i-speaker"/></svg> Read along · Español</div>
+        <p class="t" lang="es">Este es un resumen automático hecho por un programa, no es un consejo médico. Una persona del equipo del estudio confirmará si este estudio es adecuado para usted.</p>
+        <div class="wave" aria-hidden="true">
+          <i style="height:40%"></i><i style="height:70%;animation-delay:.1s"></i><i style="height:100%;animation-delay:.2s"></i><i style="height:60%;animation-delay:.3s"></i><i style="height:85%;animation-delay:.4s"></i><i style="height:45%;animation-delay:.5s"></i><i style="height:90%;animation-delay:.6s"></i><i style="height:55%;animation-delay:.7s"></i><i style="height:75%;animation-delay:.8s"></i><i style="height:40%;animation-delay:.9s"></i><i style="height:95%;animation-delay:.15s"></i><i style="height:60%;animation-delay:.35s"></i><i style="height:80%;animation-delay:.55s"></i><i style="height:50%;animation-delay:.75s"></i>
+        </div>
+        <div class="readalong" style="margin-top:22px; background:#fff">
+          <div class="label">Right-to-left for Arabic</div>
+          <p class="t" lang="ar" dir="rtl">هذا ملخص آلي من برنامج، وليس نصيحة طبية.</p>
+        </div>
+      </div>
+      <div>
+        <p class="body"><strong style="color:var(--ink)">Every summary starts with a disclaimer.</strong> Claude translates it into everyday words at a 12-year-old's reading level, keeping drug names, phone numbers and study IDs exactly as written. ElevenLabs reads it aloud.</p>
+        <div class="langs">
+          <span lang="en">English</span><span class="on" lang="es">Español</span><span lang="zh-Hans">中文</span><span lang="ru">Русский</span><span lang="ko">한국어</span><span lang="ar">العربية</span><span lang="hi">हिन्दी</span>
+        </div>
+        <p class="body" style="margin-top:26px">The language you pick is remembered for your whole visit.</p>
+      </div>
+    </div>
+    <div class="slide-foot"><span class="mini-brand"><svg class="icon" aria-hidden="true"><use href="#i-logo"/></svg> TrialFinder</span><span>6</span></div>
+    <div class="notes">Maria taps Listen. Claude translates the summary into simple Spanish, keeping drug names and phone numbers untouched, and ElevenLabs reads it aloud while the text shows on screen so she can read along. Seven languages, and Arabic displays right to left. Every summary starts with a disclaimer that this is software, not medical advice.</div>
+  </section>
+
+  <!-- 7. Safety -->
+  <section class="slide" aria-label="Safety by design">
+    <p class="eyebrow">Safety by design</p>
+    <h2 style="margin-bottom:30px">Built for someone who may be struggling.</h2>
+    <div class="safety-grid">
+      <div class="crisis-mini">
+        <svg class="heart" aria-hidden="true"><use href="#i-heart"/></svg>
+        <h3>You don't have to go through this alone.</h3>
+        <p>Call or text 988 to reach the 988 Suicide &amp; Crisis Lifeline, any time.</p>
+        <span class="b"><svg class="icon" aria-hidden="true"><use href="#i-phone"/></svg> Call 988</span>
+        <span class="em">If you are in immediate danger, call 911.</span>
+      </div>
+      <ul class="rules">
+        <li><svg aria-hidden="true"><use href="#i-heart"/></svg><div><strong>Crisis check runs first</strong><span>If someone writes about ending their life, we show no trials, only support.</span></div></li>
+        <li><svg aria-hidden="true"><use href="#i-shield"/></svg><div><strong>Never says "you're eligible"</strong><span>Only the study team decides. We never diagnose.</span></div></li>
+        <li><svg aria-hidden="true"><use href="#i-doc"/></svg><div><strong>Never invents facts</strong><span>If the listing doesn't say it, it goes under "things the study team would check."</span></div></li>
+        <li><svg aria-hidden="true"><use href="#i-eye"/></svg><div><strong>Always visible</strong><span>"TrialFinder is software, not a doctor" on every screen.</span></div></li>
+      </ul>
+    </div>
+    <div class="slide-foot"><span class="mini-brand"><svg class="icon" aria-hidden="true"><use href="#i-logo"/></svg> TrialFinder</span><span>7</span></div>
+    <div class="notes">Our users may be struggling, so safety comes first. Before any search, Claude classifies what they wrote. If it signals a crisis, we stop and show this calm screen with 988, and 911 for immediate danger. No trials are shown. And in the matching, Claude is told never to say someone is eligible, never to diagnose, and never to invent facts.</div>
+  </section>
+
+  <!-- 8. Human in the loop -->
+  <section class="slide" aria-label="Human in the loop">
+    <p class="eyebrow">Human in the loop</p>
+    <h2>A person reviews every request. Nothing is sent without consent.</h2>
+    <div class="hitl">
+      <div class="card"><span class="who p">Patient</span><h3>Reviews what will be sent</h3><p>Her profile and the software's fit reasons, shown before anything leaves.</p></div>
+      <div class="card"><span class="who p">Patient</span><h3>Gives consent</h3><div class="check"><i aria-hidden="true">✓</i><span>I agree to share this with the study team. This is not enrollment.</span></div></div>
+      <div class="card"><span class="who c">Coordinator</span><h3>Reviews the request</h3><p>Sees reasons for, against and unknowns, then chooses "Approve and contact patient" or "Not a fit".</p></div>
+      <div class="card"><span class="who p">Patient</span><h3>Sees the status</h3><div class="pill sent"><svg class="icon" aria-hidden="true"><use href="#i-send"/></svg> Sent to study team</div><div class="pill ok"><svg class="icon" aria-hidden="true"><use href="#i-phone"/></svg> Study team will reach out</div></div>
+    </div>
+    <p class="never">TrialFinder <strong>never</strong> presents anything as an enrollment decision.</p>
+    <div class="slide-foot"><span class="mini-brand"><svg class="icon" aria-hidden="true"><use href="#i-logo"/></svg> TrialFinder</span><span>8</span></div>
+    <div class="notes">If Maria wants to contact a study, she first sees exactly what will be shared and has to tick a consent box. The request goes to a coordinator queue. A human reviews the software's pre-screen and decides whether to reach out. Maria's card updates live, from "Sent to study team" to "Study team will reach out."</div>
+  </section>
+
+  <!-- 9. Reliability -->
+  <section class="slide" aria-label="Built to never break">
+    <p class="eyebrow">Reliability</p>
+    <h2>Built so the experience never breaks.</h2>
+    <table class="fallbacks">
+      <thead><tr><th scope="col">If this fails…</th><th scope="col">…TrialFinder does this</th></tr></thead>
+      <tbody>
+        <tr><td>ClinicalTrials.gov is slow (8s+) or down</td><td>Loads 12 clearly labeled sample trials and shows a "Showing sample data" badge</td></tr>
+        <tr><td>Claude is unavailable for the safety check</td><td>Falls back to a keyword check. The safety check is never skipped.</td></tr>
+        <tr><td>Claude's answer can't be read</td><td>Marks the trial "Possible fit" with "Could not analyze automatically"</td></tr>
+        <tr><td>Voice service is unavailable</td><td>Uses the device's built-in voice and still shows the read-along text</td></tr>
+      </tbody>
+    </table>
+    <div class="slide-foot"><span class="mini-brand"><svg class="icon" aria-hidden="true"><use href="#i-logo"/></svg> TrialFinder</span><span>9</span></div>
+    <div class="notes">For a health tool, failing gracefully matters. Every external dependency has a fallback. The one I'd highlight: if Claude is down, the crisis check falls back to keywords. It is never skipped.</div>
+  </section>
+
+  <!-- 10. Architecture -->
+  <section class="slide" aria-label="Under the hood">
+    <p class="eyebrow">Under the hood</p>
+    <h2 style="margin-bottom:10px">Simple stack. Keys stay on the server.</h2>
+    <div class="arch">
+      <div class="box"><h3>Browser</h3><p>One HTML file, vanilla JS and CSS. No build step. Keyboard and screen-reader friendly.</p></div>
+      <div class="arrow" aria-hidden="true"></div>
+      <div class="box server"><h3>Node + Express server</h3><p>Crisis check → search → match 5 trials at a time → translate → speak. Results cached in memory.</p><span class="key"><svg class="icon" aria-hidden="true"><use href="#i-shield"/></svg> API keys live only here</span></div>
+      <div class="arrow" aria-hidden="true"></div>
+      <div class="ext">
+        <div class="box"><h3>Claude Opus 5.5</h3><p>Crisis classifier, fit analysis, translation</p></div>
+        <div class="box"><h3>ClinicalTrials.gov API v2</h3><p>Recruiting studies by condition and distance</p></div>
+        <div class="box"><h3>ElevenLabs Flash v2.5</h3><p>Natural multilingual voice</p></div>
+      </div>
+    </div>
+    <div class="stats"><div><strong>1</strong>dependency (Express)</div><div><strong>7</strong>languages</div><div><strong>~140</strong>NYC ZIP codes bundled</div><div><strong>0</strong>real patient data</div></div>
+    <div class="slide-foot"><span class="mini-brand"><svg class="icon" aria-hidden="true"><use href="#i-logo"/></svg> TrialFinder</span><span>10</span></div>
+    <div class="notes">Technically it's deliberately simple: one static page and a small Express server. All the API keys stay on the server. Claude Opus 5.5 does three jobs: the crisis classifier, the eligibility analysis in strict JSON, and translation. The only dependency is Express.</div>
+  </section>
+
+  <!-- 11. Demo -->
+  <section class="slide" aria-label="Live demo">
+    <p class="eyebrow">Live demo</p>
+    <div class="demo-grid">
+      <div>
+        <h2>Let's find Maria a study.</h2>
+        <ol class="demo-steps">
+          <li>Load Maria and search</li>
+          <li>Read her results and the "why"</li>
+          <li>Listen to a summary in Spanish</li>
+          <li>Contact a study, then approve as the coordinator</li>
+          <li>See the crisis safety stop</li>
+        </ol>
+      </div>
+      <div class="card url-card">
+        <p class="small">Try it yourself</p>
+        <p class="url" id="live-url">localhost:3000</p>
+        <p class="small" style="margin-top:18px">Coordinator view: <strong>/coordinator.html</strong></p>
+      </div>
+    </div>
+    <div class="slide-foot"><span class="mini-brand"><svg class="icon" aria-hidden="true"><use href="#i-logo"/></svg> TrialFinder</span><span>11</span></div>
+    <div class="notes">Switch to the app now. 1) Load sample patient: Maria, then Find studies. 2) Point at the summary bar and open "Why" on the top card. 3) Click Listen (Spanish is already selected for Maria). 4) Contact this study, tick consent, Send. Switch to the coordinator window and click Approve, then switch back to show "Study team will reach out." 5) Change my answers, choose "Crisis-check test", search, and show the 988 screen. Tip: run Maria once before presenting so results are cached and instant.</div>
+  </section>
+
+  <!-- 12. What's next -->
+  <section class="slide" aria-label="What's next">
+    <p class="eyebrow">What's next</p>
+    <h2>What it takes to make this real.</h2>
+    <div class="next-grid">
+      <div class="card"><div class="icon-dot"><svg aria-hidden="true"><use href="#i-send"/></svg></div><h3>Real study teams</h3><p>Route requests to actual site coordinators instead of a demo queue.</p></div>
+      <div class="card"><div class="icon-dot"><svg aria-hidden="true"><use href="#i-doctor"/></svg></div><h3>Clinician review</h3><p>Have clinicians and patients evaluate summaries and fit reasons for accuracy and tone.</p></div>
+      <div class="card"><div class="icon-dot"><svg aria-hidden="true"><use href="#i-shield"/></svg></div><h3>Privacy and compliance</h3><p>Secure storage, accounts and HIPAA review before any real patient data.</p></div>
+      <div class="card"><div class="icon-dot warm"><svg aria-hidden="true"><use href="#i-pin"/></svg></div><h3>Beyond NYC</h3><p>Real geocoding instead of a bundled ZIP table, and accurate site addresses.</p></div>
+      <div class="card"><div class="icon-dot warm"><svg aria-hidden="true"><use href="#i-eye"/></svg></div><h3>Test with real users</h3><p>Usability sessions with screen-reader users and people with low health literacy.</p></div>
+      <div class="card"><div class="icon-dot warm"><svg aria-hidden="true"><use href="#i-globe"/></svg></div><h3>More languages</h3><p>Translate the whole interface, not just the summaries, and add more languages.</p></div>
+    </div>
+    <div class="slide-foot"><span class="mini-brand"><svg class="icon" aria-hidden="true"><use href="#i-logo"/></svg> TrialFinder</span><span>12</span></div>
+    <div class="notes">To make this real: connect to actual study coordinators, have clinicians and patients review the output, do the privacy and HIPAA work before any real data, expand beyond New York, and test with the people we built it for.</div>
+  </section>
+
+  <!-- 13. Thanks -->
+  <section class="slide" aria-label="Thank you">
+    <div class="end">
+      <div class="brand-row"><svg aria-hidden="true"><use href="#i-logo"/></svg><span>TrialFinder</span></div>
+      <h1>Thank you.</h1>
+      <p class="lead" style="margin-top:24px">github.com/soumyaadubey/claudebuildday10-08</p>
+      <p class="disclaimer">TrialFinder is software, not a doctor. It does not diagnose or decide eligibility. All patient data in this demo is synthetic.</p>
+    </div>
+    <div class="notes">Thank you. Happy to take questions. The code is on GitHub.</div>
+  </section>
+</main>
+
+<div class="notes-panel" id="notes-panel" hidden aria-live="polite"><h2>Speaker notes</h2><div id="notes-text"></div></div>
+<div class="help-hint" id="help-hint">← → to move · F full screen · N speaker notes</div>
+<div class="controls">
+  <button type="button" id="prev" aria-label="Previous slide">←</button>
+  <span class="counter" id="counter" aria-live="polite"></span>
+  <button type="button" id="next" aria-label="Next slide">→</button>
+  <button type="button" id="notes-btn" aria-pressed="false">Notes</button>
+  <button type="button" id="fs-btn">Full screen</button>
+</div>
+
+<script>
+(() => {
+  'use strict';
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const total = slides.length;
+  let current = 0;
+
+  // Show the address the deck is being served from (works for localhost and the public tunnel link).
+  const url = document.getElementById('live-url');
+  if (location.protocol.startsWith('http')) url.textContent = location.host;
+
+  function fit() {
+    const s = Math.min(window.innerWidth / 1600, window.innerHeight / 900);
+    document.documentElement.style.setProperty('--s', s);
+  }
+
+  function go(i) {
+    current = Math.max(0, Math.min(total - 1, i));
+    slides.forEach((el, n) => {
+      const on = n === current;
+      el.classList.toggle('active', on);
+      el.inert = !on;
+      el.setAttribute('aria-hidden', on ? 'false' : 'true');
+    });
+    document.getElementById('counter').textContent = `${current + 1} / ${total}`;
+    document.getElementById('progress').style.width = `${((current + 1) / total) * 100}%`;
+    const notes = slides[current].querySelector('.notes');
+    document.getElementById('notes-text').textContent = notes ? notes.textContent : '';
+    history.replaceState(null, '', `#${current + 1}`);
+  }
+
+  function toggleNotes() {
+    const panel = document.getElementById('notes-panel');
+    panel.hidden = !panel.hidden;
+    document.getElementById('notes-btn').setAttribute('aria-pressed', String(!panel.hidden));
+  }
+  function toggleFullscreen() {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen().catch(() => {});
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.target.closest('button') && (e.key === ' ' || e.key === 'Enter')) return; // let buttons work
+    switch (e.key) {
+      case 'ArrowRight': case 'PageDown': case ' ': e.preventDefault(); go(current + 1); break;
+      case 'ArrowLeft': case 'PageUp': e.preventDefault(); go(current - 1); break;
+      case 'Home': go(0); break;
+      case 'End': go(total - 1); break;
+      case 'f': case 'F': toggleFullscreen(); break;
+      case 'n': case 'N': toggleNotes(); break;
+    }
+  });
+  document.getElementById('prev').addEventListener('click', () => go(current - 1));
+  document.getElementById('next').addEventListener('click', () => go(current + 1));
+  document.getElementById('notes-btn').addEventListener('click', toggleNotes);
+  document.getElementById('fs-btn').addEventListener('click', toggleFullscreen);
+  window.addEventListener('resize', fit);
+  setTimeout(() => { document.getElementById('help-hint').hidden = true; }, 6000);
+  let idleTimer;
+  const wake = () => {
+    document.body.classList.remove('idle');
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => document.body.classList.add('idle'), 2500);
+  };
+  document.addEventListener('mousemove', wake);
+  document.addEventListener('focusin', wake);
+  wake();
+
+  fit();
+  go((parseInt(location.hash.slice(1), 10) || 1) - 1);
+})();
+</script>
+</body>
+</html>
