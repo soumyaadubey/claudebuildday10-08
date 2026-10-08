@@ -3,380 +3,612 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TrialFinder: find clinical studies near you</title>
-<meta name="description" content="Find recruiting clinical trials near you, explained in plain language.">
+<title>TrialFinder: research studies near you, in plain language</title>
+<meta name="description" content="Find recruiting clinical trials near you, explained in plain language and read aloud in your language.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%230E6B66'/%3E%3Cpath d='M9 17l4.5 4.5L23 11' stroke='%23fff' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
   :root {
-    --bg: #FBF6EE;
+    --bg: #FBF7F1;
+    --bg-deep: #F4EDE2;
     --surface: #FFFFFF;
-    --surface-warm: #FFF9F1;
-    --ink: #1E2430;
-    --muted: #4A5160;
-    --border: #E2D7C7;
+    --surface-warm: #FFFAF3;
+    --ink: #1C2330;
+    --muted: #535B69;
+    --line: #ECE4D8;
+    --input-line: #8E8476;
     --primary: #0E6B66;
     --primary-hover: #0A5450;
-    --primary-soft: #E3F1EF;
+    --primary-soft: #E6F2F0;
     --accent: #B4532A;
+    --accent-soft: #FBEADF;
     --focus: #1D4ED8;
-    --likely-bg: #DDF3E4; --likely-ink: #14532D; --likely-border: #7FC296;
-    --possible-bg: #FDEFD3; --possible-ink: #6B3B00; --possible-border: #E2B25C;
-    --unlikely-bg: #EDEBE7; --unlikely-ink: #3A3A40; --unlikely-border: #C4BFB7;
-    --pending-bg: #EEF2F6; --pending-ink: #334155; --pending-border: #CBD5E1;
-    --radius: 14px;
-    --shadow: 0 1px 2px rgba(30, 36, 48, .06), 0 4px 16px rgba(30, 36, 48, .06);
+    --likely-bg: #E2F4E8; --likely-ink: #14532D; --likely-line: #8BC9A0;
+    --possible-bg: #FDF0D6; --possible-ink: #6B3B00; --possible-line: #E3B866;
+    --unlikely-bg: #EFEDE9; --unlikely-ink: #3A3A40; --unlikely-line: #C9C4BC;
+    --pending-bg: #EEF2F6; --pending-ink: #334155; --pending-line: #CBD5E1;
+    --radius: 18px;
+    --shadow-sm: 0 1px 2px rgba(28, 35, 48, .05);
+    --shadow: 0 1px 2px rgba(28, 35, 48, .04), 0 8px 24px rgba(28, 35, 48, .06);
+    --shadow-lg: 0 2px 6px rgba(28, 35, 48, .05), 0 24px 48px rgba(28, 35, 48, .10);
   }
   * { box-sizing: border-box; }
-  html { font-size: 18px; }
+  html { font-size: 18px; scroll-behavior: smooth; }
   body {
     margin: 0; min-height: 100vh; display: flex; flex-direction: column;
     background: var(--bg); color: var(--ink);
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif;
-    line-height: 1.6;
+    line-height: 1.6; -webkit-font-smoothing: antialiased;
   }
-  h1, h2, h3 { line-height: 1.25; margin: 0 0 .5rem; }
-  h1 { font-size: 2rem; }
-  h2 { font-size: 1.4rem; }
-  h3 { font-size: 1.15rem; }
-  p { margin: 0 0 1rem; }
+  h1, h2, h3, h4 { line-height: 1.2; margin: 0; letter-spacing: -.015em; text-wrap: balance; }
+  p { margin: 0; }
   a { color: var(--primary); text-underline-offset: 3px; }
   a:hover { color: var(--primary-hover); }
-  :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: 6px; }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: 8px; }
   [hidden] { display: none !important; }
   .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
-  .skip { position: absolute; left: -999px; top: 0; background: var(--ink); color: #fff; padding: .6rem 1rem; z-index: 100; border-radius: 0 0 8px 0; }
+  .skip { position: absolute; left: -999px; top: 0; background: var(--ink); color: #fff; padding: .6rem 1rem; z-index: 100; border-radius: 0 0 10px 0; }
   .skip:focus { left: 0; color: #fff; }
   svg.icon { width: 1.15em; height: 1.15em; flex: none; vertical-align: -0.2em; }
+  .wrap { width: 100%; max-width: 1120px; margin: 0 auto; padding: 0 1.5rem; }
+  .wrap-narrow { max-width: 920px; }
 
-  /* Header / footer */
-  .site-header { background: var(--surface); border-bottom: 1px solid var(--border); }
-  .site-header .wrap { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-top: .8rem; padding-bottom: .8rem; }
-  .brand { display: flex; align-items: center; gap: .65rem; color: var(--ink); text-decoration: none; font-weight: 750; font-size: 1.3rem; letter-spacing: -.01em; }
-  .brand:hover { color: var(--ink); }
-  .brand-mark { width: 40px; height: 40px; }
-  .tagline { color: var(--muted); font-size: .9rem; margin: 0; }
-  .wrap { width: 100%; max-width: 980px; margin: 0 auto; padding-left: 1.25rem; padding-right: 1.25rem; }
-  main { flex: 1; padding: 2rem 0 3rem; }
-  main:focus { outline: none; }
-  .site-footer { background: #F3ECE1; border-top: 1px solid var(--border); padding: 1.1rem 0; font-size: .95rem; color: var(--ink); }
-  .site-footer p { margin: 0; }
-  .site-footer .wrap { display: flex; gap: 1rem; justify-content: space-between; align-items: center; flex-wrap: wrap; }
-  .footer-safety { font-weight: 600; }
-
-  /* Buttons */
+  /* ---------- Buttons ---------- */
   .btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
-    min-height: 48px; padding: .6rem 1.2rem; border-radius: 999px; border: 2px solid transparent;
-    font: inherit; font-weight: 650; font-size: 1rem; cursor: pointer; text-decoration: none; line-height: 1.2;
+    display: inline-flex; align-items: center; justify-content: center; gap: .55rem;
+    min-height: 50px; padding: .65rem 1.35rem; border-radius: 999px; border: 2px solid transparent;
+    font: inherit; font-weight: 650; font-size: 1rem; line-height: 1.2; cursor: pointer; text-decoration: none;
+    transition: background-color .15s, border-color .15s, box-shadow .15s;
   }
-  .btn:disabled { cursor: not-allowed; opacity: .55; }
-  .btn-primary { background: var(--primary); color: #fff; }
+  .btn:disabled { cursor: not-allowed; opacity: .5; }
+  .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 2px 6px rgba(14,107,102,.25); }
   .btn-primary:hover:not(:disabled) { background: var(--primary-hover); color: #fff; }
   .btn-secondary { background: var(--surface); color: var(--primary); border-color: var(--primary); }
   .btn-secondary:hover:not(:disabled) { background: var(--primary-soft); }
-  .btn-ghost { background: transparent; color: var(--ink); border-color: var(--border); }
-  .btn-ghost:hover:not(:disabled) { background: var(--surface); }
-  .btn-lg { min-height: 56px; font-size: 1.1rem; padding: .8rem 1.8rem; }
-  .link-btn { background: none; border: 0; padding: .25rem; font: inherit; color: var(--primary); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+  .btn-ghost { background: transparent; color: var(--ink); }
+  .btn-ghost:hover:not(:disabled) { background: rgba(28,35,48,.05); }
+  .btn-lg { min-height: 58px; font-size: 1.08rem; padding: .85rem 1.8rem; }
+  .btn-sm { min-height: 44px; padding: .45rem 1.05rem; font-size: .95rem; }
+  .link-btn { background: none; border: 0; padding: .2rem; font: inherit; color: var(--primary); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 
-  /* Cards / panels */
-  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.6rem; }
-  .lead { font-size: 1.15rem; color: var(--muted); max-width: 46rem; }
+  /* ---------- Header / footer ---------- */
+  .site-header { position: sticky; top: 0; z-index: 30; background: rgba(251,247,241,.88); backdrop-filter: saturate(1.4) blur(10px); border-bottom: 1px solid transparent; transition: border-color .2s; }
+  .site-header.scrolled { border-bottom-color: var(--line); }
+  .site-header .wrap { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 72px; }
+  .brand { display: inline-flex; align-items: center; gap: .6rem; color: var(--ink); text-decoration: none; font-weight: 800; font-size: 1.2rem; letter-spacing: -.01em; background: none; border: 0; padding: 0; cursor: pointer; font-family: inherit; }
+  .brand:hover { color: var(--ink); }
+  .brand svg { width: 38px; height: 38px; }
+  .nav { display: flex; align-items: center; gap: .4rem; }
+  .nav a { color: var(--ink); text-decoration: none; font-weight: 600; font-size: .95rem; padding: .5rem .8rem; border-radius: 999px; }
+  .nav a:hover { background: rgba(28,35,48,.05); }
+  body:not([data-screen="landing"]) .landing-only { display: none !important; }
+  main { flex: 1; }
+  main:focus { outline: none; }
+  .site-footer { border-top: 1px solid var(--line); background: var(--bg-deep); padding: 1.6rem 0; font-size: .92rem; }
+  .site-footer .wrap { display: flex; gap: 1rem 2rem; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+  .footer-safety { font-weight: 650; max-width: 46rem; }
 
-  /* Intake form */
-  .intake-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem 1.5rem; }
-  .field { display: flex; flex-direction: column; gap: .35rem; }
-  .field.full { grid-column: 1 / -1; }
+  /* ---------- Landing ---------- */
+  .hero { padding: 4.5rem 0 4rem; }
+  .hero .wrap { display: grid; grid-template-columns: 1.1fr .9fr; gap: 4rem; align-items: center; }
+  .pill-row { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1.4rem; }
+  .pill { display: inline-flex; align-items: center; gap: .4rem; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: .3rem .85rem; font-size: .88rem; font-weight: 600; color: var(--muted); }
+  .pill svg { color: var(--primary); }
+  .hero h1 { font-size: clamp(2.4rem, 5.2vw, 3.7rem); line-height: 1.05; letter-spacing: -.03em; }
+  .hero h1 .hl { color: var(--primary); }
+  .hero h1:focus { outline: none; }
+  .hero-lead { font-size: 1.2rem; color: var(--muted); margin-top: 1.3rem; max-width: 32rem; }
+  .hero-actions { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: 2rem; align-items: flex-start; }
+  .hero-note { margin-top: 1.4rem; font-size: .9rem; color: var(--muted); display: flex; gap: .5rem; align-items: center; }
+  .hero-visual { position: relative; }
+  .hero-visual::before { content: ""; position: absolute; inset: -12% -8% -12% 4%; background: radial-gradient(closest-side, rgba(14,107,102,.12), rgba(14,107,102,0)); z-index: -1; }
+  .example-label { font-size: .8rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: .7rem; }
+  .example-stack { display: flex; flex-direction: column; gap: .9rem; }
+  .ex-card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow-lg); padding: 1.15rem 1.3rem; }
+  .ex-card:nth-child(2) { margin-left: 2rem; box-shadow: var(--shadow); }
+  .ex-card:nth-child(3) { margin-left: 4rem; box-shadow: var(--shadow); opacity: .9; }
+  .ex-title { font-weight: 700; margin: .55rem 0 .25rem; line-height: 1.3; }
+  .ex-meta { font-size: .88rem; color: var(--muted); display: flex; gap: 1rem; flex-wrap: wrap; }
+  .ex-meta span { display: inline-flex; gap: .3rem; align-items: center; }
+  .ex-actions { display: flex; gap: .5rem; margin-top: .8rem; }
+  .ex-btn { font-size: .82rem; font-weight: 700; padding: .3rem .75rem; border-radius: 999px; border: 1.5px solid var(--primary); color: var(--primary); display: inline-flex; gap: .3rem; align-items: center; }
+  .ex-btn.solid { background: var(--primary); color: #fff; }
+
+  .section { padding: 4.5rem 0; }
+  .section-alt { background: var(--surface); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .eyebrow { text-transform: uppercase; letter-spacing: .12em; font-weight: 800; font-size: .8rem; color: var(--accent); margin-bottom: .7rem; }
+  .section h2 { font-size: clamp(1.7rem, 3.4vw, 2.3rem); max-width: 40rem; }
+  .section-lead { color: var(--muted); font-size: 1.08rem; margin-top: .8rem; max-width: 40rem; }
+  .steps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 2.5rem; }
+  .step-card { padding: 1.6rem; border-radius: var(--radius); background: var(--bg); border: 1px solid var(--line); }
+  .step-num { width: 46px; height: 46px; border-radius: 50%; background: var(--primary); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 1.15rem; margin-bottom: 1rem; }
+  .step-card:first-child .step-num { background: var(--accent); }
+  .step-card h3 { font-size: 1.2rem; margin-bottom: .4rem; }
+  .step-card p { color: var(--muted); font-size: .97rem; }
+  .promise-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.2rem 2.5rem; margin-top: 2.5rem; }
+  .promise { display: flex; gap: 1rem; align-items: flex-start; }
+  .promise-icon { width: 48px; height: 48px; border-radius: 14px; background: var(--primary-soft); color: var(--primary); display: grid; place-items: center; flex: none; }
+  .promise-icon.warm { background: var(--accent-soft); color: var(--accent); }
+  .promise-icon svg { width: 24px; height: 24px; }
+  .promise h3 { font-size: 1.08rem; margin-bottom: .2rem; }
+  .promise p { color: var(--muted); font-size: .95rem; }
+  .cta-band { margin: 0 auto; text-align: center; padding: 3.5rem 2rem; border-radius: 28px; background: linear-gradient(135deg, #0E6B66, #0B514D); color: #fff; }
+  .cta-band h2 { color: #fff; margin: 0 auto; max-width: none; }
+  .cta-band p { color: rgba(255,255,255,.85); margin-top: .7rem; }
+  .cta-band .btn { margin-top: 1.6rem; background: #fff; color: var(--primary); box-shadow: none; }
+  .cta-band .btn:hover { background: #F1F7F6; color: var(--primary-hover); }
+
+  /* Sample patient menu */
+  .sample-menu { position: relative; }
+  .sample-menu > summary { list-style: none; }
+  .sample-menu > summary::-webkit-details-marker { display: none; }
+  .sample-menu .menu { position: absolute; z-index: 40; top: calc(100% + .5rem); left: 0; width: min(380px, 86vw); background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow-lg); padding: .5rem; }
+  .menu-item { display: flex; gap: .8rem; align-items: center; width: 100%; text-align: left; background: none; border: 0; border-radius: 12px; padding: .7rem .8rem; font: inherit; color: var(--ink); cursor: pointer; }
+  .menu-item:hover, .menu-item:focus-visible { background: var(--bg); }
+  .menu-avatar { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; color: #fff; flex: none; }
+  .menu-item strong { display: block; font-size: .98rem; }
+  .menu-item span.sub { display: block; font-size: .85rem; color: var(--muted); line-height: 1.35; }
+  .menu-sep { border: 0; border-top: 1px solid var(--line); margin: .4rem .5rem; }
+  .menu-note { font-size: .8rem; color: var(--muted); padding: .3rem .8rem .4rem; }
+
+  /* ---------- Wizard ---------- */
+  .flow-screen { padding: 3rem 0 4rem; }
+  .wizard { max-width: 700px; margin: 0 auto; background: var(--surface); border-radius: 24px; box-shadow: var(--shadow); padding: 2.4rem 2.6rem 2rem; }
+  .wizard-top { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: .7rem; font-size: .9rem; color: var(--muted); font-weight: 600; }
+  .bar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 2.2rem; }
+  .bar span { height: 6px; border-radius: 6px; background: var(--line); transition: background-color .25s; }
+  .bar span.on { background: var(--primary); }
+  .step h1 { font-size: 1.85rem; margin-bottom: .5rem; }
+  .step h1:focus { outline: none; }
+  .step-help { color: var(--muted); margin-bottom: 1.6rem; }
+  .field { display: flex; flex-direction: column; gap: .4rem; margin-bottom: 1.4rem; }
+  .field:last-child { margin-bottom: 0; }
   label, legend { font-weight: 650; }
-  .help { color: var(--muted); font-size: .92rem; margin: 0; font-weight: 400; }
-  input[type=text], input[type=number], input[type=email], input[type=tel], select, textarea {
-    font: inherit; color: var(--ink); background: #fff; border: 2px solid #B9AE9E; border-radius: 10px;
-    padding: .6rem .8rem; min-height: 50px; width: 100%;
+  .help { color: var(--muted); font-size: .9rem; font-weight: 400; }
+  input[type=text], input[type=number], select, textarea {
+    font: inherit; color: var(--ink); background: var(--surface); border: 1.5px solid var(--input-line); border-radius: 12px;
+    padding: .7rem .95rem; min-height: 56px; width: 100%; transition: border-color .15s, box-shadow .15s;
   }
-  textarea { min-height: 140px; resize: vertical; }
-  input:focus-visible, select:focus-visible, textarea:focus-visible { border-color: var(--focus); outline: 3px solid rgba(29,78,216,.35); outline-offset: 0; }
-  fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
-  legend { padding: 0; margin-bottom: .35rem; }
-  .choice-row { display: flex; flex-wrap: wrap; gap: .5rem; }
-  .choice { position: relative; }
-  .choice input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
-  .choice span {
-    display: inline-flex; align-items: center; gap: .4rem; min-height: 48px; padding: .5rem 1rem;
-    border: 2px solid #B9AE9E; border-radius: 999px; background: #fff; font-weight: 550;
-  }
-  .choice input:checked + span { background: var(--primary); border-color: var(--primary); color: #fff; }
-  .choice input:checked + span::before { content: "✓"; font-weight: 800; }
-  .choice input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 3px; }
-  .persona-box { background: var(--surface-warm); border: 1px dashed #D3B48F; border-radius: var(--radius); padding: 1rem 1.2rem; margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: .75rem 1.25rem; align-items: end; }
-  .persona-box .field { flex: 1 1 280px; }
-  .safety-note { display: flex; gap: .6rem; align-items: flex-start; background: #FFF4E5; border-left: 4px solid var(--accent); padding: .7rem .9rem; border-radius: 8px; font-size: .95rem; margin: .5rem 0 0; }
-  .form-actions { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 1.75rem; }
-  .form-error { color: #9F1D1D; font-weight: 600; margin: 0; }
+  .input-xl { font-size: 1.2rem; min-height: 64px; }
+  .input-short { max-width: 12rem; }
+  textarea { min-height: 170px; resize: vertical; line-height: 1.55; }
+  input:focus-visible, select:focus-visible, textarea:focus-visible { outline: none; border-color: var(--focus); box-shadow: 0 0 0 4px rgba(29,78,216,.18); }
+  input[aria-invalid="true"] { border-color: #B42318; }
+  fieldset { border: 0; padding: 0; margin: 0 0 1.4rem; min-width: 0; }
+  fieldset:last-child { margin-bottom: 0; }
+  legend { padding: 0; margin-bottom: .5rem; }
+  .options { display: flex; flex-wrap: wrap; gap: .55rem; }
+  .opt { position: relative; }
+  .opt input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+  .opt span { display: inline-flex; align-items: center; gap: .4rem; min-height: 52px; padding: .55rem 1.15rem; border: 1.5px solid var(--input-line); border-radius: 14px; background: var(--surface); font-weight: 600; transition: background-color .15s, border-color .15s; }
+  .opt input:hover + span { background: var(--bg); }
+  .opt input:checked + span { background: var(--primary-soft); border-color: var(--primary); color: #0B4F4B; box-shadow: inset 0 0 0 1px var(--primary); }
+  .opt input:checked + span::before { content: "✓"; font-weight: 800; }
+  .opt input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 3px; }
+  .quick { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .9rem; align-items: center; }
+  .quick-label { font-size: .9rem; color: var(--muted); margin-right: .2rem; }
+  .chip-btn { font: inherit; font-size: .92rem; font-weight: 600; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 999px; padding: .4rem .9rem; min-height: 40px; cursor: pointer; }
+  .chip-btn:hover { border-color: var(--input-line); }
+  .safety-note { display: flex; gap: .65rem; align-items: flex-start; background: var(--accent-soft); color: #5B2A12; border-radius: 12px; padding: .8rem 1rem; font-size: .95rem; margin-top: 1rem; }
+  .safety-note a { color: #5B2A12; font-weight: 800; }
+  .review { border: 1px solid var(--line); border-radius: 16px; overflow: hidden; margin-bottom: 1.6rem; }
+  .review-row { display: grid; grid-template-columns: 9rem 1fr auto; gap: 1rem; align-items: start; padding: .85rem 1.1rem; border-top: 1px solid var(--line); }
+  .review-row:first-child { border-top: 0; }
+  .review-row dt { font-weight: 650; color: var(--muted); font-size: .95rem; }
+  .review-row dd { margin: 0; overflow-wrap: anywhere; }
+  .review-row dd.long { font-size: .95rem; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .wizard-nav { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-top: 2.2rem; padding-top: 1.5rem; border-top: 1px solid var(--line); }
+  .form-error { color: #B42318; font-weight: 600; font-size: .95rem; margin-top: .8rem; }
+  .form-error:empty { display: none; }
+  .privacy-line { font-size: .88rem; color: var(--muted); display: flex; gap: .5rem; align-items: flex-start; margin-top: 1.2rem; }
 
-  /* Loading */
-  .loading { text-align: center; padding: 3rem 1rem; }
-  .pulse { width: 72px; height: 72px; margin: 0 auto 1.5rem; border-radius: 50%; background: var(--primary-soft); display: grid; place-items: center; animation: pulse 1.8s ease-in-out infinite; }
-  .pulse svg { width: 36px; height: 36px; color: var(--primary); }
+  /* ---------- Loading ---------- */
+  .loading { max-width: 560px; margin: 0 auto; text-align: center; padding: 3rem 1rem; }
+  .pulse { width: 80px; height: 80px; margin: 0 auto 1.6rem; border-radius: 50%; background: var(--primary-soft); display: grid; place-items: center; animation: pulse 1.8s ease-in-out infinite; }
+  .pulse svg { width: 38px; height: 38px; color: var(--primary); }
   @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
-  .steps { list-style: none; padding: 0; margin: 1rem auto 0; max-width: 26rem; text-align: left; }
-  .steps li { display: flex; gap: .6rem; align-items: center; padding: .35rem 0; color: var(--muted); }
-  .steps li.active { color: var(--ink); font-weight: 650; }
-  .steps li.done { color: var(--likely-ink); }
+  .loading h1 { font-size: 1.8rem; }
+  .loading h1:focus { outline: none; }
+  .load-steps { list-style: none; padding: 0; margin: 1.6rem auto 0; max-width: 22rem; text-align: left; }
+  .load-steps li { display: flex; gap: .7rem; align-items: center; padding: .4rem 0; color: var(--muted); }
+  .load-steps li::before { content: ""; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--input-line); flex: none; }
+  .load-steps li.active { color: var(--ink); font-weight: 650; }
+  .load-steps li.active::before { border-color: var(--primary); background: var(--primary-soft); }
+  .load-steps li.done { color: var(--likely-ink); }
+  .load-steps li.done::before { background: var(--likely-ink); border-color: var(--likely-ink); }
 
-  /* Crisis */
+  /* ---------- Crisis ---------- */
   body.crisis-mode .site-header { display: none; }
-  body.crisis-mode main { padding: 0; display: flex; }
-  .crisis { flex: 1; display: flex; align-items: center; justify-content: center; min-height: calc(100vh - 90px); background: linear-gradient(180deg, #E6F2EF 0%, #F6F1FA 100%); padding: 2rem 1.25rem; }
+  .crisis { flex: 1; display: flex; align-items: center; justify-content: center; min-height: calc(100vh - 90px); background: linear-gradient(180deg, #E6F2EF 0%, #F6F1FA 100%); padding: 2rem 1.5rem; }
   .crisis-inner { max-width: 40rem; text-align: center; }
-  .crisis-inner h1 { font-size: 2.2rem; margin-bottom: 1rem; }
+  .crisis-inner h1 { font-size: 2.3rem; margin-bottom: 1rem; }
   .crisis-inner h1:focus { outline: none; }
-  .crisis-lead { font-size: 1.35rem; margin-bottom: 1.75rem; }
+  .crisis-lead { font-size: 1.35rem; margin-bottom: 1.8rem; }
   .crisis-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-bottom: 1.5rem; }
-  .btn-crisis { background: #0B5C57; color: #fff; font-size: 1.25rem; min-height: 64px; padding: .9rem 2.2rem; }
+  .btn-crisis { background: #0B5C57; color: #fff; font-size: 1.25rem; min-height: 64px; padding: .9rem 2.3rem; }
   .btn-crisis:hover { background: #084642; color: #fff; }
-  .emergency { font-size: 1.15rem; font-weight: 650; background: #fff; border-radius: 12px; padding: .8rem 1rem; display: inline-block; }
+  .emergency { font-size: 1.15rem; font-weight: 700; background: #fff; border-radius: 12px; padding: .8rem 1.1rem; display: inline-block; }
   .heart { width: 64px; height: 64px; color: #0B5C57; margin-bottom: 1rem; }
 
-  /* Results */
-  .results-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
-  .sample-badge { display: inline-flex; align-items: center; gap: .4rem; background: #FFF1C2; color: #5C4200; border: 2px solid #E0B93E; border-radius: 999px; padding: .3rem .9rem; font-weight: 700; font-size: .92rem; }
-  .summary-bar { background: var(--surface); border: 1px solid var(--border); border-left: 6px solid var(--primary); border-radius: var(--radius); padding: 1.1rem 1.4rem; box-shadow: var(--shadow); margin-bottom: 1rem; }
-  .summary-bar h1 { font-size: 1.45rem; margin: 0 0 .25rem; }
-  .summary-bar h1:focus { outline: none; }
-  .summary-sub { color: var(--muted); margin: 0; }
-  .progress { height: 8px; background: #EFE7DA; border-radius: 99px; overflow: hidden; margin-top: .8rem; }
+  /* ---------- Results ---------- */
+  .results-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.2rem; }
+  .sample-badge { display: inline-flex; align-items: center; gap: .4rem; background: #FFF1C2; color: #5C4200; border: 1.5px solid #E0B93E; border-radius: 999px; padding: .3rem .9rem; font-weight: 700; font-size: .9rem; }
+  .summary { margin-bottom: 1.4rem; }
+  .summary h1 { font-size: clamp(1.4rem, 2.6vw, 1.75rem); }
+  .summary h1:focus { outline: none; }
+  .summary-sub { color: var(--muted); margin-top: .35rem; }
+  .progress { height: 6px; background: var(--line); border-radius: 99px; overflow: hidden; margin-top: 1rem; max-width: 420px; }
   .progress > div { height: 100%; width: 0; background: var(--primary); transition: width .4s ease; }
-  .note { background: #FFF9E8; border: 1px solid #EAD7A4; border-radius: 10px; padding: .7rem 1rem; font-size: .95rem; }
-  .filters { display: flex; flex-direction: column; gap: .6rem; margin: 1.25rem 0 1rem; }
-  .chip-row { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
-  .chip-label { font-weight: 700; min-width: 5.5rem; }
-  .chip { min-height: 44px; padding: .35rem .95rem; border-radius: 999px; border: 2px solid #B9AE9E; background: #fff; font: inherit; font-size: .95rem; font-weight: 600; cursor: pointer; color: var(--ink); display: inline-flex; gap: .35rem; align-items: center; }
-  .chip[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
-  .chip[aria-pressed="true"]::before { content: "✓"; }
-  .not-decision { display: flex; gap: .6rem; align-items: flex-start; color: var(--muted); font-size: .95rem; }
+  .note { background: #FFF9E8; border: 1px solid #EFDDAE; border-radius: 12px; padding: .75rem 1rem; font-size: .95rem; margin-bottom: 1.2rem; }
+  .toolbar { display: flex; flex-direction: column; gap: .5rem; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: .5rem; margin-bottom: 1rem; }
+  .seg { display: flex; flex-wrap: wrap; gap: .3rem; }
+  .seg button { font: inherit; font-size: .93rem; font-weight: 650; background: transparent; color: var(--ink); border: 0; border-radius: 10px; padding: .5rem .9rem; min-height: 44px; cursor: pointer; display: inline-flex; gap: .4rem; align-items: center; }
+  .seg button:hover { background: var(--bg); }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+  .seg .count { font-size: .8rem; font-weight: 700; background: rgba(28,35,48,.08); border-radius: 999px; padding: .05rem .5rem; min-width: 1.6rem; text-align: center; }
+  .seg button[aria-pressed="true"] .count { background: rgba(255,255,255,.2); }
+  .toolbar-right { display: flex; gap: .6rem 1.4rem; align-items: center; flex-wrap: wrap; border-top: 1px solid var(--line); padding: .5rem .4rem .1rem; }
+  .mini-select { display: flex; align-items: center; gap: .5rem; font-size: .93rem; font-weight: 650; }
+  .mini-select select { min-height: 44px; width: auto; padding: .35rem 2rem .35rem .75rem; font-size: .93rem; border-radius: 10px; }
+  .switch { font: inherit; font-size: .93rem; font-weight: 650; display: inline-flex; align-items: center; gap: .6rem; background: none; border: 0; cursor: pointer; color: var(--ink); min-height: 44px; padding: 0 .3rem; }
+  .switch .track { width: 44px; height: 26px; border-radius: 999px; background: #B7AFA3; position: relative; transition: background-color .2s; flex: none; }
+  .switch .track::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform .2s; box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+  .switch[aria-checked="true"] .track { background: var(--primary); }
+  .switch[aria-checked="true"] .track::after { transform: translateX(18px); }
+  .not-decision { display: flex; gap: .6rem; align-items: flex-start; color: var(--muted); font-size: .92rem; margin-bottom: 1.4rem; }
   .trial-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 1.1rem; }
 
   /* Trial card */
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.3rem 1.4rem; }
-  .card[data-fit="likely"] { border-left: 6px solid var(--likely-border); }
-  .card[data-fit="possible"] { border-left: 6px solid var(--possible-border); }
-  .card[data-fit="unlikely"] { border-left: 6px solid var(--unlikely-border); }
-  .card-top { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-bottom: .6rem; }
-  .badge { display: inline-flex; align-items: center; gap: .4rem; padding: .25rem .8rem; border-radius: 999px; font-weight: 750; font-size: .95rem; border: 2px solid; }
-  .badge-likely { background: var(--likely-bg); color: var(--likely-ink); border-color: var(--likely-border); }
-  .badge-possible { background: var(--possible-bg); color: var(--possible-ink); border-color: var(--possible-border); }
-  .badge-unlikely { background: var(--unlikely-bg); color: var(--unlikely-ink); border-color: var(--unlikely-border); }
-  .badge-pending { background: var(--pending-bg); color: var(--pending-ink); border-color: var(--pending-border); }
-  .tag { display: inline-flex; align-items: center; gap: .3rem; padding: .2rem .7rem; border-radius: 999px; font-size: .88rem; font-weight: 600; background: var(--primary-soft); color: #0B4F4B; }
+  .card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.5rem 1.6rem 1.3rem; border: 1px solid transparent; transition: box-shadow .2s; }
+  .card:hover { box-shadow: var(--shadow-lg); }
+  .card-top { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-bottom: .8rem; }
+  .badge { display: inline-flex; align-items: center; gap: .4rem; padding: .25rem .8rem; border-radius: 999px; font-weight: 750; font-size: .92rem; border: 1.5px solid; }
+  .badge-likely { background: var(--likely-bg); color: var(--likely-ink); border-color: var(--likely-line); }
+  .badge-possible { background: var(--possible-bg); color: var(--possible-ink); border-color: var(--possible-line); }
+  .badge-unlikely { background: var(--unlikely-bg); color: var(--unlikely-ink); border-color: var(--unlikely-line); }
+  .badge-pending { background: var(--pending-bg); color: var(--pending-ink); border-color: var(--pending-line); }
+  .tag { display: inline-flex; align-items: center; gap: .3rem; padding: .2rem .7rem; border-radius: 999px; font-size: .85rem; font-weight: 600; background: var(--primary-soft); color: #0B4F4B; }
   .tag-sample { background: #FFF1C2; color: #5C4200; }
-  .card-title { font-size: 1.2rem; margin-bottom: .35rem; }
-  .card-meta { display: flex; flex-wrap: wrap; gap: .25rem 1rem; color: var(--muted); font-size: .95rem; margin-bottom: .8rem; }
+  .card-title { font-size: 1.22rem; line-height: 1.3; margin-bottom: .4rem; }
+  .card-meta { display: flex; flex-wrap: wrap; gap: .2rem 1.1rem; color: var(--muted); font-size: .92rem; margin-bottom: .9rem; }
   .card-meta span { display: inline-flex; align-items: center; gap: .3rem; }
-  .card-summary { margin-bottom: .8rem; }
-  .card-summary p { margin: 0; }
-  .from-listing { font-size: .88rem; color: var(--muted); font-style: italic; margin-top: .3rem !important; }
-  .skeleton { display: block; height: 1em; background: linear-gradient(90deg, #F1EBE1 25%, #F8F3EB 50%, #F1EBE1 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 6px; margin: .45rem 0; }
+  .card-summary { margin-bottom: 1rem; max-width: 46rem; }
+  .from-listing { font-size: .86rem; color: var(--muted); font-style: italic; margin-top: .4rem !important; }
+  .skeleton { display: block; height: 1em; background: linear-gradient(90deg, #F3EEE6 25%, #FAF6F0 50%, #F3EEE6 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 6px; margin: .5rem 0; }
   @keyframes shimmer { to { background-position: -200% 0; } }
-  details { border-top: 1px solid var(--border); padding: .2rem 0; }
-  details summary { cursor: pointer; font-weight: 650; padding: .55rem 0; min-height: 44px; display: flex; align-items: center; gap: .5rem; list-style: none; }
-  details summary::-webkit-details-marker { display: none; }
-  details summary::before { content: "▸"; color: var(--primary); transition: transform .15s; display: inline-block; }
-  details[open] summary::before { transform: rotate(90deg); }
-  .why-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; padding: .3rem 0 .8rem; }
-  .why-grid h4 { display: flex; align-items: center; gap: .35rem; margin: 0 0 .35rem; font-size: 1rem; }
-  .why-grid ul, .questions ol { margin: 0; padding-left: 1.2rem; }
-  .why-grid li, .questions li { margin-bottom: .3rem; }
+  .disclosures { border-top: 1px solid var(--line); }
+  details.more { border-bottom: 1px solid var(--line); }
+  details.more summary { cursor: pointer; font-weight: 650; padding: .7rem 0; min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: .5rem; list-style: none; }
+  details.more summary::-webkit-details-marker { display: none; }
+  details.more summary::after { content: ""; width: 10px; height: 10px; border-right: 2.5px solid var(--primary); border-bottom: 2.5px solid var(--primary); transform: rotate(45deg) translateY(-3px); transition: transform .2s; flex: none; margin-right: .3rem; }
+  details.more[open] summary::after { transform: rotate(-135deg) translateY(-3px); }
+  .why-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2rem; padding: .2rem 0 1.1rem; }
+  .why-grid h4 { display: flex; align-items: center; gap: .4rem; margin: 0 0 .4rem; font-size: .97rem; }
+  .why-grid ul, .questions-list { margin: 0; padding-left: 1.15rem; font-size: .97rem; }
+  .why-grid li, .questions-list li { margin-bottom: .3rem; }
   .why-for h4 { color: var(--likely-ink); }
   .why-against h4 { color: #8A2E12; }
   .why-unknown h4 { color: var(--pending-ink); }
-  .questions ol { padding-bottom: .8rem; }
-  .contact-line { font-size: .95rem; color: var(--muted); margin: 0 0 .8rem; }
-  .card-actions { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; justify-content: space-between; border-top: 1px solid var(--border); padding-top: 1rem; margin-top: .2rem; }
-  .listen-group { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
-  .listen-group select { width: auto; min-width: 12rem; min-height: 48px; }
-  .readalong { margin-top: 1rem; background: var(--surface-warm); border: 1px solid #EAD9C2; border-radius: 12px; padding: 1rem 1.1rem; }
-  .readalong-label { font-weight: 700; font-size: .9rem; color: var(--muted); margin: 0 0 .4rem; display: flex; gap: .4rem; align-items: center; }
-  .readalong-text { font-size: 1.1rem; white-space: pre-line; margin-bottom: .6rem; }
-  .readalong audio { width: 100%; margin-top: .3rem; }
-  .readalong-note { font-size: .9rem; color: var(--muted); margin: .4rem 0 0; }
-  .contact-status { margin-top: 1rem; display: flex; gap: .7rem; align-items: flex-start; border-radius: 12px; padding: .85rem 1rem; font-weight: 600; }
-  .contact-status p { margin: 0; }
-  .contact-status .sub { font-weight: 400; font-size: .95rem; }
-  .status-sent { background: #EAF1FB; color: #1E3A6E; border: 1px solid #BFD3F2; }
-  .status-approved { background: var(--likely-bg); color: var(--likely-ink); border: 1px solid var(--likely-border); }
-  .status-declined { background: var(--unlikely-bg); color: var(--unlikely-ink); border: 1px solid var(--unlikely-border); }
-  .empty { text-align: center; padding: 2rem; }
+  .questions-list { padding-bottom: 1rem; }
+  .contact-line { font-size: .9rem; color: var(--muted); padding-bottom: 1rem; }
+  .card-actions { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; justify-content: space-between; padding-top: 1.1rem; }
+  .listen-group { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+  .listen-group select { width: auto; min-width: 11rem; min-height: 50px; border-radius: 999px; padding-left: 1rem; font-size: .95rem; }
+  .readalong { margin-top: 1.1rem; background: var(--surface-warm); border: 1px solid #F0E2CF; border-radius: 14px; padding: 1rem 1.15rem; }
+  .readalong-label { font-weight: 700; font-size: .85rem; color: var(--muted); margin: 0 0 .4rem; display: flex; gap: .4rem; align-items: center; }
+  .readalong-text { font-size: 1.1rem; white-space: pre-line; margin-bottom: .6rem !important; }
+  .readalong audio { width: 100%; margin-top: .2rem; }
+  .readalong-note { font-size: .88rem; color: var(--muted); margin-top: .3rem !important; }
+  .readalong-note:empty { display: none; }
+  .contact-status { margin-top: 1.1rem; display: flex; gap: .75rem; align-items: flex-start; border-radius: 14px; padding: .9rem 1.1rem; font-weight: 650; }
+  .contact-status .sub { font-weight: 400; font-size: .93rem; margin-top: .1rem; }
+  .status-sent { background: #EDF3FC; color: #1E3A6E; }
+  .status-approved { background: var(--likely-bg); color: var(--likely-ink); }
+  .status-declined { background: var(--unlikely-bg); color: var(--unlikely-ink); }
+  .empty { text-align: center; padding: 2.5rem 1.5rem; background: var(--surface); border-radius: var(--radius); border: 1px dashed var(--input-line); }
+  .empty p { margin-bottom: 1rem; }
 
-  /* Dialog */
-  dialog { border: 0; border-radius: 18px; padding: 0; width: min(720px, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); box-shadow: 0 20px 60px rgba(0,0,0,.25); color: var(--ink); }
-  dialog::backdrop { background: rgba(30, 36, 48, .55); }
-  .dialog-body { padding: 1.6rem; }
-  .prescreen { background: var(--surface-warm); border: 1px solid #EAD9C2; border-radius: 12px; padding: 1rem 1.2rem; margin: 1rem 0; }
-  .prescreen h3 { font-size: 1rem; margin: .9rem 0 .3rem; }
+  /* ---------- Dialog ---------- */
+  dialog { border: 0; border-radius: 22px; padding: 0; width: min(700px, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); box-shadow: 0 24px 64px rgba(0,0,0,.25); color: var(--ink); }
+  dialog::backdrop { background: rgba(28, 35, 48, .5); backdrop-filter: blur(2px); }
+  .dialog-body { padding: 1.9rem 2rem; }
+  .dialog-body h2 { font-size: 1.55rem; margin-bottom: .6rem; }
+  .dialog-intro { color: var(--muted); }
+  .prescreen { background: var(--bg); border-radius: 14px; padding: 1.1rem 1.25rem; margin: 1.2rem 0; }
+  .prescreen h3 { font-size: .98rem; margin: 1rem 0 .3rem; display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
   .prescreen h3:first-child { margin-top: 0; }
-  .prescreen dl { display: grid; grid-template-columns: max-content 1fr; gap: .2rem 1rem; margin: 0; }
+  .prescreen dl { display: grid; grid-template-columns: max-content 1fr; gap: .2rem 1rem; margin: 0; font-size: .97rem; }
   .prescreen dt { font-weight: 650; }
   .prescreen dd { margin: 0; }
-  .prescreen ul { margin: 0; padding-left: 1.2rem; }
-  .consent { display: flex; gap: .75rem; align-items: flex-start; background: #fff; border: 2px solid var(--border); border-radius: 12px; padding: .9rem 1rem; margin: 1rem 0; font-weight: 500; cursor: pointer; }
-  .consent input { width: 26px; height: 26px; flex: none; margin-top: .15rem; accent-color: var(--primary); }
-  .dialog-actions { display: flex; gap: .75rem; justify-content: flex-end; flex-wrap: wrap; }
-  .contact-fields { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem 1rem; }
+  .prescreen ul { margin: 0; padding-left: 1.2rem; font-size: .97rem; }
+  .contact-fields { display: grid; grid-template-columns: 1fr 1fr; gap: .9rem 1rem; }
+  .contact-fields .field { margin: 0; }
+  .consent { display: flex; gap: .8rem; align-items: flex-start; border: 1.5px solid var(--input-line); border-radius: 14px; padding: .95rem 1.05rem; margin: 1.2rem 0 0; font-weight: 500; cursor: pointer; }
+  .consent:has(input:checked) { border-color: var(--primary); background: var(--primary-soft); }
+  .consent input { width: 24px; height: 24px; flex: none; margin-top: .15rem; accent-color: var(--primary); }
+  .dialog-actions { display: flex; gap: .75rem; justify-content: flex-end; flex-wrap: wrap; margin-top: 1.4rem; }
 
-  @media (max-width: 720px) {
-    h1 { font-size: 1.6rem; }
-    .intake-grid, .contact-fields { grid-template-columns: 1fr; }
+  @media (max-width: 860px) {
+    .hero { padding: 2.5rem 0 3rem; }
+    .hero .wrap { grid-template-columns: 1fr; gap: 2.5rem; }
+    .steps-grid { grid-template-columns: 1fr; }
+    .promise-grid { grid-template-columns: 1fr; }
+    .nav a.nav-link { display: none; }
+  }
+  @media (max-width: 640px) {
+    .wizard { padding: 1.6rem 1.25rem 1.4rem; border-radius: 20px; }
+    .step h1 { font-size: 1.5rem; }
     .why-grid { grid-template-columns: 1fr; }
-    .tagline { display: none; }
-    .card { padding: 1.1rem; }
+    .card { padding: 1.2rem; }
     .card-actions { flex-direction: column; align-items: stretch; }
     .listen-group { flex-direction: column; align-items: stretch; }
     .listen-group select { width: 100%; }
-    .chip-label { min-width: 100%; }
+    .contact-fields { grid-template-columns: 1fr; }
+    .review-row { grid-template-columns: 1fr auto; }
+    .review-row dd { grid-column: 1 / -1; grid-row: 2; }
+    .ex-card:nth-child(2), .ex-card:nth-child(3) { margin-left: 0; }
   }
   @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
     *, *::before, *::after { animation: none !important; transition: none !important; }
   }
 </style>
 </head>
-<body>
+<body data-screen="landing">
 <a class="skip" href="#main">Skip to main content</a>
 
-<header class="site-header">
+<!-- Icon sprite -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-logo" viewBox="0 0 40 40"><circle cx="20" cy="20" r="19" fill="#0E6B66"/><circle cx="18" cy="18" r="8.5" fill="none" stroke="#FBF6EE" stroke-width="3"/><path d="M24.5 24.5l6 6" stroke="#FBF6EE" stroke-width="3.4" stroke-linecap="round"/><path d="M14.5 18.2l2.6 2.6 4.6-5" stroke="#F2B48C" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.3C.9 8.3 3 4.5 6.7 4.5c2 0 3.5 1.1 4.3 2.4.8-1.3 2.3-2.4 4.3-2.4 3.7 0 5.8 3.8 4.3 7.2C19.5 16.4 12 21 12 21z"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M2.5 12h19M12 2.5c3 3 3 16 0 19M12 2.5c-3 3-3 16 0 19" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2.5l8 3v6c0 5-3.4 8.8-8 10-4.6-1.2-8-5-8-10v-6z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M8.5 12l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-people" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="17" cy="9" r="2.6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M17.5 14c2.4.3 4 2.2 4 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 2.5h8l4.5 4.5v14.5H6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 11h6M9 15h6M14 2.5V7h4.5" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 10.5V7.5a4 4 0 018 0v3" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M7 12.5l3.2 3.2L17 9" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-half" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12 3a9 9 0 010 18z" fill="currentColor"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M7.5 12h9" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a7 7 0 00-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 00-7-7zm0 9.5A2.5 2.5 0 1112 6.5a2.5 2.5 0 010 5z"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path fill="currentColor" d="M12 3l9 8h-3v9h-5v-6h-2v6H6v-9H3z"/></symbol>
+    <symbol id="i-speaker" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3z"/><path d="M16 8.5a5 5 0 010 7M18.5 6a8.5 8.5 0 010 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path fill="currentColor" d="M2 21l21-9L2 3v7l15 2-15 2z"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 006.6 6.6l2.2-2.2a1 1 0 011-.25 11.4 11.4 0 003.6.57 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.57a1 1 0 01-.25 1z"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 11v6M12 7.5v.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+
+<header class="site-header" id="site-header">
   <div class="wrap">
-    <a class="brand" href="/" aria-label="TrialFinder home">
-      <svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true">
-        <circle cx="20" cy="20" r="19" fill="#0E6B66"/>
-        <circle cx="18" cy="18" r="8.5" fill="none" stroke="#FBF6EE" stroke-width="3"/>
-        <path d="M24.5 24.5l6 6" stroke="#FBF6EE" stroke-width="3.4" stroke-linecap="round"/>
-        <path d="M14.5 18.2l2.6 2.6 4.6-5" stroke="#F2B48C" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
+    <button type="button" class="brand" id="brand" aria-label="TrialFinder home">
+      <svg aria-hidden="true"><use href="#i-logo"/></svg>
       TrialFinder
-    </a>
-    <p class="tagline">Research studies near you, in plain language.</p>
+    </button>
+    <nav class="nav" aria-label="Main">
+      <a class="nav-link landing-only" href="#how">How it works</a>
+      <a class="nav-link landing-only" href="#safety">Safety</a>
+      <button type="button" class="btn btn-primary btn-sm landing-only" data-start>Find studies</button>
+    </nav>
   </div>
 </header>
 
 <main id="main" tabindex="-1">
-  <div class="wrap">
 
-    <!-- ============ INTAKE ============ -->
-    <section id="screen-intake" aria-labelledby="intake-title">
-      <h1 id="intake-title" tabindex="-1">Find research studies near you</h1>
-      <p class="lead">Answer a few questions. We'll look for clinical trials that are looking for volunteers near you, and explain each one in plain language.</p>
-
-      <div class="persona-box">
-        <div class="field">
-          <label for="persona">Load sample patient</label>
-          <select id="persona">
-            <option value="">Choose a sample patient…</option>
-            <option value="maria">Maria, 42 · Queens · depression · speaks Spanish</option>
-            <option value="james">James, 67 · Brooklyn · depression and type 2 diabetes</option>
-            <option value="priya">Priya, 29 · Manhattan · anxiety · pregnant</option>
-            <optgroup label="Demo safety test">
-              <option value="crisis">Crisis-check test (synthetic sentence)</option>
-            </optgroup>
-          </select>
+  <!-- ===================== LANDING ===================== -->
+  <section id="screen-landing" aria-labelledby="hero-title">
+    <div class="hero">
+      <div class="wrap">
+        <div>
+          <div class="pill-row">
+            <span class="pill"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg> Free, no sign-up</span>
+            <span class="pill"><svg class="icon" aria-hidden="true"><use href="#i-globe"/></svg> 7 languages</span>
+            <span class="pill"><svg class="icon" aria-hidden="true"><use href="#i-speaker"/></svg> Read aloud</span>
+          </div>
+          <h1 id="hero-title" tabindex="-1">Research studies near you, <span class="hl">in plain language.</span></h1>
+          <p class="hero-lead">Answer a few simple questions. We'll find clinical trials looking for volunteers near you, explain each one in everyday words, and read it to you in your language.</p>
+          <div class="hero-actions">
+            <button type="button" class="btn btn-primary btn-lg" data-start>
+              Find studies <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg>
+            </button>
+            <details class="sample-menu" data-sample-menu>
+              <summary class="btn btn-secondary btn-lg">Load sample patient</summary>
+              <div class="menu" role="group" aria-label="Sample patients"></div>
+            </details>
+          </div>
+          <p class="hero-note"><svg class="icon" aria-hidden="true" style="color:var(--accent)"><use href="#i-heart"/></svg><span>Thinking about hurting yourself? Call or text <a href="tel:988"><strong>988</strong></a>, any time.</span></p>
         </div>
-        <p class="help">All sample patients are invented for this demo.</p>
-      </div>
 
-      <form id="intake-form" class="panel" novalidate>
-        <div class="intake-grid">
-          <div class="field full">
-            <label for="condition">What health condition do you want to find studies for?</label>
-            <input type="text" id="condition" name="condition" list="condition-list" required autocomplete="off" placeholder="For example: depression" aria-describedby="condition-help">
+        <div class="hero-visual" aria-hidden="true">
+          <p class="example-label">Example results</p>
+          <div class="example-stack">
+            <div class="ex-card">
+              <span class="badge badge-likely"><svg class="icon"><use href="#i-check"/></svg> May be a good fit</span>
+              <p class="ex-title">Spanish-language CBT app for depression</p>
+              <div class="ex-meta"><span><svg class="icon"><use href="#i-pin"/></svg> 1.3 miles</span><span><svg class="icon"><use href="#i-home"/></svg> From home</span></div>
+              <div class="ex-actions"><span class="ex-btn"><svg class="icon"><use href="#i-speaker"/></svg> Listen</span><span class="ex-btn solid">Contact this study</span></div>
+            </div>
+            <div class="ex-card">
+              <span class="badge badge-possible"><svg class="icon"><use href="#i-half"/></svg> Possible fit</span>
+              <p class="ex-title">Add-on medicine for major depression</p>
+              <div class="ex-meta"><span><svg class="icon"><use href="#i-pin"/></svg> 8.1 miles</span></div>
+            </div>
+            <div class="ex-card">
+              <span class="badge badge-unlikely"><svg class="icon"><use href="#i-minus"/></svg> Probably not</span>
+              <p class="ex-title">Treatment for depression after childbirth</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section section-alt" id="how">
+      <div class="wrap">
+        <p class="eyebrow">How it works</p>
+        <h2>From "I don't know where to start" to "someone will call me."</h2>
+        <div class="steps-grid">
+          <div class="step-card"><div class="step-num">1</div><h3>Tell us about you</h3><p>Your condition, age, ZIP code and how far you can travel, plus anything you'd like to share in your own words.</p></div>
+          <div class="step-card"><div class="step-num">2</div><h3>We find and explain</h3><p>We search ClinicalTrials.gov for studies recruiting near you, then explain each one simply: what it involves and why it may or may not fit.</p></div>
+          <div class="step-card"><div class="step-num">3</div><h3>You decide</h3><p>Listen in your language, write down questions to ask, and contact a study team only if you want to.</p></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="safety">
+      <div class="wrap">
+        <p class="eyebrow">Our promises</p>
+        <h2>Built carefully, for people who deserve care.</h2>
+        <div class="promise-grid">
+          <div class="promise"><div class="promise-icon warm"><svg aria-hidden="true"><use href="#i-heart"/></svg></div><div><h3>Your safety comes first</h3><p>If what you write suggests you may be in crisis, we pause the search and connect you with the 988 Lifeline.</p></div></div>
+          <div class="promise"><div class="promise-icon"><svg aria-hidden="true"><use href="#i-shield"/></svg></div><div><h3>We never decide for you</h3><p>TrialFinder doesn't diagnose or decide eligibility. Only a study's team can say whether a study is right for you.</p></div></div>
+          <div class="promise"><div class="promise-icon"><svg aria-hidden="true"><use href="#i-doc"/></svg></div><div><h3>Honest about what we don't know</h3><p>If a study listing doesn't say something, we tell you, and list it as a question for the study team.</p></div></div>
+          <div class="promise"><div class="promise-icon warm"><svg aria-hidden="true"><use href="#i-people"/></svg></div><div><h3>A person reviews every request</h3><p>Nothing is shared without your consent, and a study coordinator reviews each request before reaching out.</p></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" style="padding-top:0">
+      <div class="wrap">
+        <div class="cta-band">
+          <h2>Ready to look?</h2>
+          <p>It takes about two minutes. You can stop at any time.</p>
+          <button type="button" class="btn btn-lg" data-start>Find studies near me <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== INTAKE (one question at a time) ===================== -->
+  <section id="screen-intake" class="flow-screen" hidden aria-label="Questions">
+    <div class="wrap">
+      <form id="intake-form" class="wizard" novalidate>
+        <div class="wizard-top">
+          <span id="step-count" aria-live="polite">Step 1 of 5</span>
+          <details class="sample-menu" data-sample-menu>
+            <summary class="link-btn">Load sample patient</summary>
+            <div class="menu" role="group" aria-label="Sample patients" style="left:auto;right:0"></div>
+          </details>
+        </div>
+        <div class="bar" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+
+        <!-- Step 1 -->
+        <div class="step" data-step="0">
+          <h1 tabindex="-1">What would you like to find studies for?</h1>
+          <p class="step-help">Everyday words are fine. You don't need the medical name.</p>
+          <div class="field">
+            <label for="condition" class="sr-only">Health condition</label>
+            <input type="text" id="condition" name="condition" class="input-xl" list="condition-list" autocomplete="off" placeholder="For example: depression">
             <datalist id="condition-list">
               <option value="Depression"><option value="Treatment-resistant depression"><option value="Generalized anxiety disorder">
               <option value="Postpartum depression"><option value="Bipolar depression"><option value="PTSD">
             </datalist>
-            <p class="help" id="condition-help">Use everyday words. You don't need the medical name.</p>
           </div>
+          <div class="quick">
+            <span class="quick-label">Common:</span>
+            <button type="button" class="chip-btn" data-condition="Depression">Depression</button>
+            <button type="button" class="chip-btn" data-condition="Generalized anxiety disorder">Anxiety</button>
+            <button type="button" class="chip-btn" data-condition="PTSD">PTSD</button>
+            <button type="button" class="chip-btn" data-condition="Bipolar disorder">Bipolar disorder</button>
+            <button type="button" class="chip-btn" data-condition="Postpartum depression">Postpartum depression</button>
+          </div>
+        </div>
 
+        <!-- Step 2 -->
+        <div class="step" data-step="1" hidden>
+          <h1 tabindex="-1">A little about you</h1>
+          <p class="step-help">Many studies are for certain ages, and some are only for one sex.</p>
           <div class="field">
-            <label for="age">Age</label>
-            <input type="number" id="age" name="age" min="18" max="110" inputmode="numeric" required aria-describedby="age-help">
-            <p class="help" id="age-help">This demo is for adults (18 and older).</p>
+            <label for="age">Your age</label>
+            <input type="number" id="age" name="age" class="input-short" min="18" max="110" inputmode="numeric" aria-describedby="age-help">
+            <span class="help" id="age-help">This demo is for adults (18 and older).</span>
           </div>
-
-          <fieldset class="field">
+          <fieldset>
             <legend>Sex</legend>
-            <div class="choice-row">
-              <label class="choice"><input type="radio" name="sex" value="female" required><span>Female</span></label>
-              <label class="choice"><input type="radio" name="sex" value="male"><span>Male</span></label>
-              <label class="choice"><input type="radio" name="sex" value="other"><span>Another / prefer not to say</span></label>
+            <div class="options">
+              <label class="opt"><input type="radio" name="sex" value="female"><span>Female</span></label>
+              <label class="opt"><input type="radio" name="sex" value="male"><span>Male</span></label>
+              <label class="opt"><input type="radio" name="sex" value="other"><span>Another / prefer not to say</span></label>
             </div>
-            <p class="help">Some studies are only for one sex.</p>
           </fieldset>
+        </div>
 
+        <!-- Step 3 -->
+        <div class="step" data-step="2" hidden>
+          <h1 tabindex="-1">Where should we look?</h1>
+          <p class="step-help">We'll search for studies recruiting near this ZIP code.</p>
           <div class="field">
             <label for="zip">ZIP code</label>
-            <input type="text" id="zip" name="zip" inputmode="numeric" maxlength="5" pattern="\d{5}" required autocomplete="postal-code" aria-describedby="zip-help">
-            <p class="help" id="zip-help">New York City ZIP codes work best in this demo.</p>
+            <input type="text" id="zip" name="zip" class="input-short" inputmode="numeric" maxlength="5" autocomplete="postal-code" aria-describedby="zip-help">
+            <span class="help" id="zip-help">New York City ZIP codes work best in this demo.</span>
           </div>
-
-          <fieldset class="field">
+          <fieldset>
             <legend>How far can you travel?</legend>
-            <div class="choice-row">
-              <label class="choice"><input type="radio" name="miles" value="5"><span>5 miles</span></label>
-              <label class="choice"><input type="radio" name="miles" value="10" checked><span>10 miles</span></label>
-              <label class="choice"><input type="radio" name="miles" value="25"><span>25 miles</span></label>
-              <label class="choice"><input type="radio" name="miles" value="50"><span>50 miles</span></label>
+            <div class="options">
+              <label class="opt"><input type="radio" name="miles" value="5"><span>5 miles</span></label>
+              <label class="opt"><input type="radio" name="miles" value="10" checked><span>10 miles</span></label>
+              <label class="opt"><input type="radio" name="miles" value="25"><span>25 miles</span></label>
+              <label class="opt"><input type="radio" name="miles" value="50"><span>50 miles</span></label>
             </div>
           </fieldset>
+        </div>
 
-          <div class="field full">
-            <label for="freeText">Tell us about your health in your own words <span class="help">(optional)</span></label>
-            <textarea id="freeText" name="freeText" aria-describedby="free-help free-safety" placeholder="For example: medicines you've tried, other health conditions, or anything else you'd want a study team to know."></textarea>
-            <p class="help" id="free-help">Please don't include your full name or address here.</p>
-            <p class="safety-note" id="free-safety">
-              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.3C.9 8.3 3 4.5 6.7 4.5c2 0 3.5 1.1 4.3 2.4.8-1.3 2.3-2.4 4.3-2.4 3.7 0 5.8 3.8 4.3 7.2C19.5 16.4 12 21 12 21z"/></svg>
-              <span>If you're thinking about hurting yourself, you can call or text <a href="tel:988"><strong>988</strong></a> any time.</span>
-            </p>
+        <!-- Step 4 -->
+        <div class="step" data-step="3" hidden>
+          <h1 tabindex="-1">Anything else you'd like to share?</h1>
+          <p class="step-help">Optional. For example: medicines you've tried, other health conditions, or what matters to you. This helps us explain each study better.</p>
+          <div class="field">
+            <label for="freeText" class="sr-only">Your health in your own words (optional)</label>
+            <textarea id="freeText" name="freeText" placeholder="Tell us about your health in your own words…" aria-describedby="free-help"></textarea>
+            <span class="help" id="free-help">Please don't include your full name or address.</span>
           </div>
+          <p class="safety-note"><svg class="icon" aria-hidden="true"><use href="#i-heart"/></svg><span>If you're thinking about hurting yourself, you can call or text <a href="tel:988">988</a> any time.</span></p>
+        </div>
 
+        <!-- Step 5 -->
+        <div class="step" data-step="4" hidden>
+          <h1 tabindex="-1">Check your answers</h1>
+          <p class="step-help">Make sure everything looks right, then we'll start searching.</p>
+          <dl class="review" id="review"></dl>
           <div class="field">
             <label for="intake-lang">Language for listening to results</label>
-            <select id="intake-lang" class="lang-select"></select>
+            <select id="intake-lang" class="lang-select" style="max-width:22rem"></select>
           </div>
+          <p class="privacy-line"><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg><span>We use your answers only to find and explain studies. Nothing is sent to a study team unless you choose to contact one.</span></p>
         </div>
 
-        <div class="form-actions">
-          <button type="submit" class="btn btn-primary btn-lg">
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
-            Find studies
-          </button>
-          <p id="form-error" class="form-error" role="alert"></p>
+        <p id="form-error" class="form-error" role="alert"></p>
+        <div class="wizard-nav">
+          <button type="button" class="btn btn-ghost" id="wiz-back"><svg class="icon" aria-hidden="true"><use href="#i-back"/></svg> Back</button>
+          <button type="submit" class="btn btn-primary btn-lg" id="wiz-next">Next <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></button>
         </div>
       </form>
-    </section>
+    </div>
+  </section>
 
-    <!-- ============ LOADING ============ -->
-    <section id="screen-loading" class="loading" hidden aria-labelledby="loading-title">
-      <div class="pulse" aria-hidden="true">
-        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
-      </div>
+  <!-- ===================== LOADING ===================== -->
+  <section id="screen-loading" class="flow-screen" hidden aria-labelledby="loading-title">
+    <div class="loading">
+      <div class="pulse" aria-hidden="true"><svg><use href="#i-search"/></svg></div>
       <h1 id="loading-title" tabindex="-1">Looking for studies…</h1>
-      <p class="lead" style="margin: 0 auto;">This usually takes a few seconds.</p>
-      <ol class="steps" aria-live="polite">
+      <p class="summary-sub">This usually takes a few seconds.</p>
+      <ol class="load-steps" aria-live="polite">
         <li id="step-1" class="active">Reading what you shared</li>
         <li id="step-2">Searching ClinicalTrials.gov near you</li>
       </ol>
-    </section>
+    </div>
+  </section>
 
-  </div>
-
-  <!-- ============ CRISIS ============ -->
+  <!-- ===================== CRISIS ===================== -->
   <section id="screen-crisis" class="crisis" hidden aria-labelledby="crisis-title">
     <div class="crisis-inner">
-      <svg class="heart" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.3C.9 8.3 3 4.5 6.7 4.5c2 0 3.5 1.1 4.3 2.4.8-1.3 2.3-2.4 4.3-2.4 3.7 0 5.8 3.8 4.3 7.2C19.5 16.4 12 21 12 21z"/></svg>
+      <svg class="heart" aria-hidden="true"><use href="#i-heart"/></svg>
       <h1 id="crisis-title" tabindex="-1">You don't have to go through this alone.</h1>
       <p class="crisis-lead">Call or text 988 to reach the 988 Suicide &amp; Crisis Lifeline, any time.</p>
       <div class="crisis-actions">
-        <a class="btn btn-crisis" href="tel:988">
-          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 006.6 6.6l2.2-2.2a1 1 0 011-.25 11.4 11.4 0 003.6.57 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.57a1 1 0 01-.25 1z"/></svg>
-          Call 988
-        </a>
+        <a class="btn btn-crisis" href="tel:988"><svg class="icon" aria-hidden="true"><use href="#i-phone"/></svg> Call 988</a>
         <a class="btn btn-secondary btn-lg" href="sms:988">Text 988</a>
       </div>
       <p class="crisis-lead" style="font-size:1.05rem">It's free and confidential. Para español, oprima 2.</p>
@@ -385,63 +617,50 @@
     </div>
   </section>
 
-  <div class="wrap">
-    <!-- ============ RESULTS ============ -->
-    <section id="screen-results" hidden aria-labelledby="summary-title">
+  <!-- ===================== RESULTS ===================== -->
+  <section id="screen-results" class="flow-screen" hidden aria-labelledby="summary-title">
+    <div class="wrap wrap-narrow">
       <div class="results-head">
-        <button type="button" id="new-search" class="btn btn-ghost">
-          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Change my answers
-        </button>
-        <span id="sample-badge" class="sample-badge" hidden>
-          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2L1 21h22L12 2zm1 15h-2v-2h2v2zm0-4h-2V9h2v4z"/></svg>
-          Showing sample data
-        </span>
+        <button type="button" id="new-search" class="btn btn-ghost btn-sm"><svg class="icon" aria-hidden="true"><use href="#i-back"/></svg> Change my answers</button>
+        <span id="sample-badge" class="sample-badge" hidden><svg class="icon" aria-hidden="true"><use href="#i-info"/></svg> Showing sample data</span>
       </div>
 
-      <div class="summary-bar">
+      <div class="summary">
         <h1 id="summary-title" tabindex="-1">Finding studies…</h1>
         <p class="summary-sub" id="summary-sub" aria-live="polite"></p>
         <div class="progress" id="progress" role="progressbar" aria-label="Studies reviewed" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="progress-fill"></div></div>
       </div>
       <p id="source-note" class="note" hidden></p>
 
-      <div class="filters" role="group" aria-label="Filter studies">
-        <div class="chip-row" role="group" aria-labelledby="fit-filter-label">
-          <span class="chip-label" id="fit-filter-label">Fit</span>
-          <button type="button" class="chip" data-filter="fit" data-value="all" aria-pressed="true">All</button>
-          <button type="button" class="chip" data-filter="fit" data-value="likely" aria-pressed="false">May be a good fit</button>
-          <button type="button" class="chip" data-filter="fit" data-value="possible" aria-pressed="false">Possible fit</button>
-          <button type="button" class="chip" data-filter="fit" data-value="unlikely" aria-pressed="false">Probably not</button>
+      <div class="toolbar" role="group" aria-label="Filter studies">
+        <div class="seg" role="group" aria-label="Filter by fit">
+          <button type="button" data-fit="all" aria-pressed="true">All <span class="count" data-count="all">0</span></button>
+          <button type="button" data-fit="likely" aria-pressed="false">May be a good fit <span class="count" data-count="likely">0</span></button>
+          <button type="button" data-fit="possible" aria-pressed="false">Possible <span class="count" data-count="possible">0</span></button>
+          <button type="button" data-fit="unlikely" aria-pressed="false">Probably not <span class="count" data-count="unlikely">0</span></button>
         </div>
-        <div class="chip-row" role="group" aria-labelledby="dist-filter-label" id="dist-chips">
-          <span class="chip-label" id="dist-filter-label">Distance</span>
-        </div>
-        <div class="chip-row">
-          <span class="chip-label">Visits</span>
-          <button type="button" class="chip" data-filter="remote" aria-pressed="false">Remote-friendly only</button>
+        <div class="toolbar-right">
+          <label class="mini-select">Distance <select id="dist-filter"></select></label>
+          <button type="button" class="switch" id="remote-toggle" role="switch" aria-checked="false"><span class="track" aria-hidden="true"></span> Remote-friendly</button>
         </div>
       </div>
 
-      <p class="not-decision">
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v6M12 16.5v.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
-        <span>These results are not an eligibility decision. Only a study's team can decide whether a study is right for you.</span>
-      </p>
+      <p class="not-decision"><svg class="icon" aria-hidden="true"><use href="#i-info"/></svg><span>These results are not an eligibility decision. Only a study's team can decide whether a study is right for you.</span></p>
 
       <ol id="trial-list" class="trial-list" aria-label="Studies"></ol>
-      <div id="empty-filter" class="empty panel" hidden>
+      <div id="empty-filter" class="empty" hidden>
         <p>No studies match these filters.</p>
         <button type="button" class="btn btn-secondary" id="clear-filters">Show all studies</button>
       </div>
-    </section>
-  </div>
+    </div>
+  </section>
 </main>
 
-<!-- ============ CONTACT REVIEW DIALOG ============ -->
+<!-- ===================== CONTACT REVIEW DIALOG ===================== -->
 <dialog id="contact-dialog" aria-labelledby="contact-title">
   <form id="contact-form" class="dialog-body" novalidate>
     <h2 id="contact-title">Review before sending</h2>
-    <p>Here is what we'll send to the team running <strong id="cd-trial"></strong>. A coordinator will review it and may reach out to talk with you. <strong>This is not enrollment</strong>, and you can say no at any time.</p>
+    <p class="dialog-intro">Here is what we'll send to the team running <strong id="cd-trial"></strong>. A coordinator will review it and may reach out to talk with you. <strong>This is not enrollment</strong>, and you can say no at any time.</p>
 
     <div class="prescreen" id="cd-prescreen"></div>
 
@@ -454,10 +673,10 @@
         </div>
         <div class="field">
           <label for="cd-reach">Phone or email</label>
-          <input type="text" id="cd-reach" autocomplete="tel" required>
+          <input type="text" id="cd-reach" autocomplete="tel">
         </div>
       </div>
-      <p class="help" style="margin-top:.4rem">Preferred language: <strong id="cd-lang"></strong></p>
+      <p class="help" style="margin-top:.5rem">Preferred language: <strong id="cd-lang"></strong></p>
     </fieldset>
 
     <label class="consent">
@@ -468,10 +687,7 @@
     <p id="cd-error" class="form-error" role="alert"></p>
     <div class="dialog-actions">
       <button type="button" class="btn btn-ghost" id="cd-cancel">Cancel</button>
-      <button type="submit" class="btn btn-primary" id="cd-send" disabled>
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
-        Send to study team
-      </button>
+      <button type="submit" class="btn btn-primary" id="cd-send" disabled><svg class="icon" aria-hidden="true"><use href="#i-send"/></svg> Send to study team</button>
     </div>
   </form>
 </dialog>
@@ -502,19 +718,14 @@
   const SPEECH_TAG = { en: 'en-US', es: 'es-US', zh: 'zh-CN', ru: 'ru-RU', ko: 'ko-KR', ar: 'ar-SA', hi: 'hi-IN' };
   const FIT_RANK = { likely: 0, possible: 1, unlikely: 2, pending: 3 };
   const SEX_LABEL = { female: 'Female', male: 'Male', other: 'Not specified' };
+  const STEP_COUNT = 5;
 
+  const svg = (id) => `<svg class="icon" aria-hidden="true"><use href="#i-${id}"/></svg>`;
   const ICON = {
-    likely: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M7 12.5l3.2 3.2L17 9" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    possible: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12 3a9 9 0 010 18z" fill="currentColor"/></svg>',
-    unlikely: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M7.5 12h9" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>',
+    likely: svg('check'), possible: svg('half'), unlikely: svg('minus'),
     pending: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg>',
-    pin: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a7 7 0 00-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 00-7-7zm0 9.5A2.5 2.5 0 1112 6.5a2.5 2.5 0 010 5z"/></svg>',
-    home: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3l9 8h-3v9h-5v-6h-2v6H6v-9H3z"/></svg>',
-    speaker: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3z"/><path d="M16 8.5a5 5 0 010 7M18.5 6a8.5 8.5 0 010 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>',
+    pin: svg('pin'), home: svg('home'), speaker: svg('speaker'), send: svg('send'), phone: svg('phone'), info: svg('info'),
     stop: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></svg>',
-    send: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>',
-    phone: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 006.6 6.6l2.2-2.2a1 1 0 011-.25 11.4 11.4 0 003.6.57 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.57a1 1 0 01-.25 1z"/></svg>',
-    info: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 11v6M12 7.5v.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>',
     plus: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M12 7.5v9M7.5 12h9" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>',
     minus: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M7.5 12h9" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>',
     question: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M9.5 9.5a2.5 2.5 0 114 2c-1 .7-1.5 1.2-1.5 2.5M12 17v.3" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>',
@@ -523,22 +734,26 @@
 
   const PERSONAS = {
     maria: {
-      name: 'Maria', reach: '(718) 555-0142', language: 'es',
+      name: 'Maria', reach: '(718) 555-0142', language: 'es', color: '#C0663B',
+      menu: '42 · Queens · depression · speaks Spanish',
       condition: 'Depression', age: 42, sex: 'female', zip: '11368', miles: '10',
       freeText: "I've had depression for about three years. My doctor tried two SSRI medicines, first sertraline and then escitalopram, and neither one helped much. I feel tired and sad most days, and it's hard to keep up with work and my kids. I'm otherwise healthy and not pregnant. I'm more comfortable speaking Spanish.",
     },
     james: {
-      name: 'James', reach: '(347) 555-0187', language: 'en',
+      name: 'James', reach: '(347) 555-0187', language: 'en', color: '#3F6EA8',
+      menu: '67 · Brooklyn · depression and type 2 diabetes',
       condition: 'Depression', age: 67, sex: 'male', zip: '11226', miles: '10',
       freeText: "I'm retired and have been depressed on and off for years, and it got worse after my wife passed two years ago. I also have type 2 diabetes and take metformin; my blood sugar is mostly under control. I tried sertraline and then bupropion, but I still don't enjoy things like I used to. I can't travel far anymore, so something close by or by video would be best.",
     },
     priya: {
-      name: 'Priya', reach: 'priya.sample@example.com', language: 'en',
+      name: 'Priya', reach: 'priya.sample@example.com', language: 'en', color: '#7A5BA6',
+      menu: '29 · Manhattan · anxiety · pregnant',
       condition: 'Generalized anxiety disorder', age: 29, sex: 'female', zip: '10025', miles: '10',
       freeText: "I'm 29 and about 20 weeks pregnant with my first child. I've had generalized anxiety since college. Therapy helped some, but the worry has gotten worse during pregnancy and I have trouble sleeping. My OB asked me to avoid starting new medicines unless we really need to.",
     },
     crisis: {
-      name: 'Test', reach: '(718) 555-0100', language: 'en',
+      name: 'Test', reach: '(718) 555-0100', language: 'en', color: '#6B7280', test: true,
+      menu: 'Synthetic sentence to demo the 988 safety stop',
       condition: 'Depression', age: 42, sex: 'female', zip: '11368', miles: '10',
       freeText: "Nothing has helped and I'm so tired of it. Lately I keep thinking everyone would be better off without me, and I've started thinking about how I would end my life.",
     },
@@ -552,14 +767,15 @@
     matches: {},
     miles: 10,
     runId: 0,
-    analysisDone: false,
     filters: { fit: 'all', dist: 'any', remote: false },
     dialogTrial: null,
+    step: 0,
+    usedPersona: false,
   };
   let sessionLang = sessionStorage.getItem('tf_lang') || 'en';
-  let requestMap = JSON.parse(sessionStorage.getItem('tf_requests') || '{}'); // nctId -> {id, status}
+  const requestMap = JSON.parse(sessionStorage.getItem('tf_requests') || '{}'); // nctId -> {id, status}
   let pollTimer = null;
-  let activePlayback = null; // { stop() }
+  let activePlayback = null; // { li, stop() }
 
   // ---------- Utilities ----------
   const $ = (sel, root = document) => root.querySelector(sel);
@@ -567,6 +783,7 @@
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const safeId = (s) => String(s).replace(/[^A-Za-z0-9_-]/g, '_');
   const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+  const byDistance = (a, b) => (a.nearest?.distance ?? 999) - (b.nearest?.distance ?? 999);
 
   async function api(path, body) {
     const res = await fetch(path, body === undefined ? {} : {
@@ -577,26 +794,30 @@
     return data;
   }
 
-  function showScreen(id) {
-    for (const s of ['screen-intake', 'screen-loading', 'screen-crisis', 'screen-results']) {
-      document.getElementById(s).hidden = s !== id;
-    }
-    document.body.classList.toggle('crisis-mode', id === 'screen-crisis');
+  const SCREENS = ['landing', 'intake', 'loading', 'crisis', 'results'];
+  function showScreen(name, { focus = true } = {}) {
+    for (const s of SCREENS) document.getElementById(`screen-${s}`).hidden = s !== name;
+    document.body.dataset.screen = name;
+    document.body.classList.toggle('crisis-mode', name === 'crisis');
     window.scrollTo(0, 0);
-    const heading = document.getElementById(id).querySelector('h1');
-    if (heading) heading.focus();
+    if (focus) {
+      const target = name === 'intake' ? $(`.step[data-step="${state.step}"] h1`) : document.getElementById(`screen-${name}`).querySelector('h1');
+      if (target) target.focus();
+    }
   }
+
+  // Header gets a hairline once you scroll.
+  const header = $('#site-header');
+  window.addEventListener('scroll', () => header.classList.toggle('scrolled', window.scrollY > 4), { passive: true });
 
   function distanceText(t) {
     const d = t.nearest && t.nearest.distance;
     if (d == null) return 'Distance not listed';
     return d < 1 ? 'Less than 1 mile away' : `${d.toFixed(1)} miles away`;
   }
-
   function phaseText(phases) {
     const p = (phases || []).filter((x) => x !== 'NA');
-    if (!p.length) return '';
-    return p.map((x) => x.replace('EARLY_PHASE', 'Early phase ').replace('PHASE', 'Phase ')).join(' / ');
+    return p.length ? p.map((x) => x.replace('EARLY_PHASE', 'Early phase ').replace('PHASE', 'Phase ')).join(' / ') : '';
   }
 
   // ---------- Language (remembered for the session) ----------
@@ -613,12 +834,34 @@
     if (e.target.classList && e.target.classList.contains('lang-select')) setSessionLang(e.target.value);
   });
 
-  // ---------- Intake ----------
+  // ---------- Navigation ----------
+  $$('[data-start]').forEach((b) => b.addEventListener('click', () => { state.step = 0; showStep(0, false); showScreen('intake'); }));
+  $('#brand').addEventListener('click', () => { state.runId++; stopPlayback(); showScreen('landing', { focus: false }); $('#hero-title').focus(); });
+
+  // ---------- Sample patient menus ----------
+  const menuHtml = Object.entries(PERSONAS).map(([key, p]) => `
+    ${p.test ? '<hr class="menu-sep"><p class="menu-note">Demo safety test</p>' : ''}
+    <button type="button" class="menu-item" data-persona="${key}">
+      <span class="menu-avatar" style="background:${p.color}" aria-hidden="true">${p.test ? '!' : esc(p.name[0])}</span>
+      <span><strong>${p.test ? 'Crisis-check test' : esc(p.name)}</strong><span class="sub">${esc(p.menu)}</span></span>
+    </button>`).join('') + '<p class="menu-note">All sample patients are invented for this demo.</p>';
+  $$('[data-sample-menu] .menu').forEach((m) => { m.innerHTML = menuHtml; });
+  document.addEventListener('click', (e) => {
+    const item = e.target.closest('[data-persona]');
+    if (item) { item.closest('details').open = false; loadPersona(item.dataset.persona); return; }
+    $$('[data-sample-menu][open]').forEach((d) => { if (!d.contains(e.target)) d.open = false; });
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    $$('[data-sample-menu][open]').forEach((d) => { d.open = false; d.querySelector('summary').focus(); });
+  });
+
+  // ---------- Intake wizard ----------
   const form = $('#intake-form');
   fillLangSelect($('#intake-lang'));
 
-  $('#persona').addEventListener('change', (e) => {
-    const p = PERSONAS[e.target.value];
+  function loadPersona(key) {
+    const p = PERSONAS[key];
     if (!p) return;
     form.condition.value = p.condition;
     form.age.value = p.age;
@@ -627,62 +870,123 @@
     $$('input[name=sex]', form).forEach((r) => { r.checked = r.value === p.sex; });
     $$('input[name=miles]', form).forEach((r) => { r.checked = r.value === p.miles; });
     state.contact = { name: p.name, reach: p.reach };
+    state.usedPersona = true;
     setSessionLang(p.language);
-    $('#form-error').textContent = '';
-  });
+    // Jump straight to the review step so the demo is one click from searching.
+    showStep(STEP_COUNT - 1, false);
+    showScreen('intake');
+  }
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const err = $('#form-error');
-    const sex = (form.querySelector('input[name=sex]:checked') || {}).value;
+  $$('[data-condition]').forEach((b) => b.addEventListener('click', () => {
+    form.condition.value = b.dataset.condition;
+    form.condition.focus();
+  }));
+
+  function readProfile() {
+    const sex = (form.querySelector('input[name=sex]:checked') || {}).value || '';
     const miles = (form.querySelector('input[name=miles]:checked') || {}).value || '10';
-    const profile = {
+    return {
       condition: form.condition.value.trim(),
       age: parseInt(form.age.value, 10),
-      sex: sex || '',
+      sex,
       zip: form.zip.value.trim(),
       miles: parseInt(miles, 10),
       freeText: form.freeText.value.trim(),
     };
-    const problems = [];
-    if (!profile.condition) problems.push({ el: form.condition, msg: 'Please enter a health condition.' });
-    if (!(profile.age >= 18 && profile.age <= 110)) problems.push({ el: form.age, msg: 'Please enter an age between 18 and 110.' });
-    if (!profile.sex) problems.push({ el: form.querySelector('input[name=sex]'), msg: 'Please choose an option for sex.' });
-    if (!/^\d{5}$/.test(profile.zip)) problems.push({ el: form.zip, msg: 'Please enter a 5-digit ZIP code.' });
+  }
+
+  function validateStep(i) {
+    const p = readProfile();
+    if (i === 0 && !p.condition) return [form.condition, 'Please type a health condition, or pick one of the common ones.'];
+    if (i === 1 && !(p.age >= 18 && p.age <= 110)) return [form.age, 'Please enter an age between 18 and 110.'];
+    if (i === 1 && !p.sex) return [form.querySelector('input[name=sex]'), 'Please choose an option for sex.'];
+    if (i === 2 && !/^\d{5}$/.test(p.zip)) return [form.zip, 'Please enter a 5-digit ZIP code.'];
+    return null;
+  }
+
+  function showStep(i, focus = true) {
+    state.step = i;
+    $$('.step', form).forEach((s) => { s.hidden = Number(s.dataset.step) !== i; });
+    $$('.bar span', form).forEach((b, n) => b.classList.toggle('on', n <= i));
+    $('#step-count').textContent = `Step ${i + 1} of ${STEP_COUNT}`;
+    $('#form-error').textContent = '';
     $$('[aria-invalid]', form).forEach((el) => el.removeAttribute('aria-invalid'));
-    if (problems.length) {
-      err.textContent = problems.map((p) => p.msg).join(' ');
-      problems.forEach((p) => p.el.setAttribute('aria-invalid', 'true'));
-      problems[0].el.focus();
-      return;
+    const next = $('#wiz-next');
+    if (i === STEP_COUNT - 1) {
+      renderReview();
+      next.innerHTML = `${svg('search')} Find studies`;
+    } else if (i === 3) {
+      next.innerHTML = `${form.freeText.value.trim() ? 'Next' : 'Skip'} ${svg('arrow')}`;
+    } else {
+      next.innerHTML = `Next ${svg('arrow')}`;
     }
-    err.textContent = '';
-    if (!$('#persona').value) state.contact = { name: '', reach: '' };
-    await runSearch(profile);
+    if (focus) { const h = $(`.step[data-step="${i}"] h1`, form); if (h) h.focus(); }
+  }
+  form.freeText.addEventListener('input', () => { if (state.step === 3) showStep(3, false); });
+
+  function renderReview() {
+    const p = readProfile();
+    const rows = [
+      ['Condition', esc(p.condition), 0, ''],
+      ['Age and sex', `${esc(p.age)} · ${esc(SEX_LABEL[p.sex] || '')}`, 1, ''],
+      ['Location', `ZIP ${esc(p.zip)} · within ${p.miles} miles`, 2, ''],
+      ['In your words', p.freeText ? esc(p.freeText) : '<span class="help">Nothing added</span>', 3, 'long'],
+    ];
+    $('#review').innerHTML = rows.map(([k, v, step, cls]) => `
+      <div class="review-row"><dt>${k}</dt><dd class="${cls}">${v}</dd>
+      <button type="button" class="link-btn" data-edit="${step}">Edit<span class="sr-only"> ${k.toLowerCase()}</span></button></div>`).join('');
+  }
+  $('#review').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-edit]');
+    if (b) showStep(Number(b.dataset.edit));
   });
 
+  $('#wiz-back').addEventListener('click', () => {
+    if (state.step === 0) showScreen('landing', { focus: false });
+    else showStep(state.step - 1);
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (state.step < STEP_COUNT - 1) {
+      const problem = validateStep(state.step);
+      if (problem) {
+        const [el, msg] = problem;
+        $('#form-error').textContent = msg;
+        el.setAttribute('aria-invalid', 'true');
+        el.focus();
+        return;
+      }
+      showStep(state.step + 1);
+      return;
+    }
+    // Final step: re-check everything (answers may have been edited).
+    for (let i = 0; i < STEP_COUNT - 1; i++) {
+      if (validateStep(i)) { showStep(i); const [el, msg] = validateStep(i); $('#form-error').textContent = msg; el.setAttribute('aria-invalid', 'true'); return; }
+    }
+    if (!state.usedPersona) state.contact = { name: '', reach: '' };
+    await runSearch(readProfile());
+  });
+
+  // ---------- Search ----------
   async function runSearch(profile) {
     const runId = ++state.runId;
     stopPlayback();
     state.profile = profile;
     state.matches = {};
-    state.analysisDone = false;
     state.filters = { fit: 'all', dist: 'any', remote: false };
 
-    showScreen('screen-loading');
+    showScreen('loading');
     $('#step-1').className = 'active';
     $('#step-2').className = '';
-    const stepTimer = setTimeout(() => {
-      $('#step-1').className = 'done';
-      $('#step-2').className = 'active';
-    }, 1800);
+    const stepTimer = setTimeout(() => { $('#step-1').className = 'done'; $('#step-2').className = 'active'; }, 1800);
 
     let data;
     try {
       data = await api('/api/search', { profile });
     } catch (e) {
       clearTimeout(stepTimer);
-      showScreen('screen-intake');
+      showScreen('intake');
       $('#form-error').textContent = `Sorry, something went wrong: ${e.message}`;
       return;
     }
@@ -690,47 +994,33 @@
     if (runId !== state.runId) return;
 
     // Crisis: stop here. No trials are shown.
-    if (data.crisis) {
-      showScreen('screen-crisis');
-      return;
-    }
+    if (data.crisis) { showScreen('crisis'); return; }
 
     state.trials = data.trials || [];
     state.miles = data.miles;
     renderResults(data);
-    showScreen('screen-results');
+    showScreen('results');
     analyzeAll(runId);
   }
 
   // ---------- Results ----------
   function renderResults(data) {
     $('#sample-badge').hidden = data.source !== 'sample';
-    const note = $('#source-note');
     const notes = [];
     if (data.source === 'sample') notes.push(`${data.note} These studies are made-up examples so you can see how TrialFinder works.`);
     if (data.origin && data.origin.approximate) notes.push("We didn't recognize that ZIP code, so we searched near Midtown Manhattan.");
-    note.textContent = notes.join(' ');
-    note.hidden = !notes.length;
+    $('#source-note').textContent = notes.join(' ');
+    $('#source-note').hidden = !notes.length;
     state.originLabel = data.origin ? data.origin.label : '';
 
-    // Distance chips: only distances up to the search radius.
-    const distRow = $('#dist-chips');
-    $$('.chip', distRow).forEach((c) => c.remove());
-    const opts = [['any', 'Any distance'], ...[5, 10, 25, 50].filter((m) => m < state.miles).map((m) => [String(m), `Within ${m} miles`])];
-    for (const [value, label] of opts) {
-      const b = document.createElement('button');
-      b.type = 'button'; b.className = 'chip';
-      b.dataset.filter = 'dist'; b.dataset.value = value;
-      b.setAttribute('aria-pressed', value === 'any' ? 'true' : 'false');
-      b.textContent = label;
-      distRow.appendChild(b);
-    }
-    syncChips();
+    const dist = $('#dist-filter');
+    dist.innerHTML = `<option value="any">Any (up to ${state.miles} mi)</option>` +
+      [5, 10, 25].filter((m) => m < state.miles).map((m) => `<option value="${m}">Within ${m} miles</option>`).join('');
+    syncFilters();
 
     const list = $('#trial-list');
     list.innerHTML = '';
-    const ordered = [...state.trials].sort((a, b) => (a.nearest?.distance ?? 999) - (b.nearest?.distance ?? 999));
-    for (const t of ordered) list.appendChild(buildCard(t));
+    for (const t of [...state.trials].sort(byDistance)) list.appendChild(buildCard(t));
     updateSummary();
     applyFilters();
     if (Object.keys(requestMap).length) startPolling();
@@ -750,7 +1040,7 @@
       <article aria-labelledby="title-${id}">
         <div class="card-top">
           <span class="badge badge-pending" data-role="badge">${ICON.pending} ${FIT_LABEL.pending}</span>
-          ${t.remote ? `<span class="tag">${ICON.home} Remote or at-home parts mentioned</span>` : ''}
+          ${t.remote ? `<span class="tag">${ICON.home} Remote or at-home parts</span>` : ''}
           ${t.isSample ? '<span class="tag tag-sample">Sample study</span>' : ''}
         </div>
         <h2 class="card-title" id="title-${id}">${esc(t.title)}</h2>
@@ -761,18 +1051,20 @@
           ${t.url ? `<span><a href="${esc(t.url)}" target="_blank" rel="noopener">${esc(t.nctId)}<span class="sr-only"> (opens ClinicalTrials.gov in a new tab)</span></a></span>` : `<span>${esc(t.nctId)}</span>`}
         </p>
         <div class="card-summary" data-role="summary" aria-busy="true">
-          <span class="skeleton" style="width:95%"></span><span class="skeleton" style="width:88%"></span><span class="skeleton" style="width:60%"></span>
+          <span class="skeleton" style="width:96%"></span><span class="skeleton" style="width:90%"></span><span class="skeleton" style="width:58%"></span>
           <span class="sr-only">Reviewing this study…</span>
         </div>
-        <details class="why" data-role="why" hidden>
-          <summary>Why this might or might not fit</summary>
-          <div class="why-grid" data-role="why-body"></div>
-        </details>
-        <details class="questions" data-role="questions" hidden>
-          <summary>Questions to ask the study team</summary>
-          <ol data-role="questions-body"></ol>
-          ${cc && (cc.phone || cc.email) ? `<p class="contact-line">Study contact listed: ${esc([cc.name, cc.phone, cc.email].filter(Boolean).join(' · '))}</p>` : ''}
-        </details>
+        <div class="disclosures" data-role="disclosures" hidden>
+          <details class="more">
+            <summary>Why this might or might not fit</summary>
+            <div class="why-grid" data-role="why-body"></div>
+          </details>
+          <details class="more">
+            <summary>Questions to ask the study team</summary>
+            <ol class="questions-list" data-role="questions-body"></ol>
+            ${cc && (cc.phone || cc.email) ? `<p class="contact-line">Study contact listed: ${esc([cc.name, cc.phone, cc.email].filter(Boolean).join(' · '))}</p>` : ''}
+          </details>
+        </div>
         <div class="card-actions">
           <div class="listen-group">
             <label class="sr-only" for="lang-${id}">Listening language</label>
@@ -804,8 +1096,9 @@
     const li = document.getElementById(`card-${safeId(t.nctId)}`);
     if (!li) return;
     li.dataset.fit = m.fit;
-    li.querySelector('[data-role=badge]').className = `badge badge-${m.fit}`;
-    li.querySelector('[data-role=badge]').innerHTML = `${ICON[m.fit]} ${FIT_LABEL[m.fit]}`;
+    const badge = li.querySelector('[data-role=badge]');
+    badge.className = `badge badge-${m.fit}`;
+    badge.innerHTML = `${ICON[m.fit]} ${FIT_LABEL[m.fit]}`;
     const summary = li.querySelector('[data-role=summary]');
     summary.removeAttribute('aria-busy');
     summary.innerHTML = `<p>${esc(m.plain_summary)}</p>` +
@@ -813,17 +1106,16 @@
     li.querySelector('[data-role=why-body]').innerHTML = `
       <div class="why-for"><h4>${ICON.plus} Reasons it may fit</h4>${listHtml(m.reasons_for)}</div>
       <div class="why-against"><h4>${ICON.minus} Reasons it may not</h4>${listHtml(m.reasons_against)}</div>
-      <div class="why-unknown"><h4>${ICON.question} Things the study team would check</h4>${listHtml(m.unknowns)}</div>`;
+      <div class="why-unknown"><h4>${ICON.question} For the study team to check</h4>${listHtml(m.unknowns)}</div>`;
     li.querySelector('[data-role=questions-body]').innerHTML = m.questions_to_ask.map((q) => `<li>${esc(q)}</li>`).join('');
-    li.querySelector('[data-role=why]').hidden = false;
-    li.querySelector('[data-role=questions]').hidden = false;
+    li.querySelector('[data-role=disclosures]').hidden = false;
     li.querySelector('[data-role=listen]').disabled = false;
     if (!requestMap[t.nctId]) li.querySelector('[data-role=contact]').disabled = false;
   }
 
   // ---------- Matching (max 5 at a time) ----------
   async function analyzeAll(runId) {
-    const queue = [...state.trials].sort((a, b) => (a.nearest?.distance ?? 999) - (b.nearest?.distance ?? 999));
+    const queue = [...state.trials].sort(byDistance);
     let next = 0;
     const worker = async () => {
       while (next < queue.length) {
@@ -848,33 +1140,26 @@
     };
     await Promise.all(Array.from({ length: Math.min(5, queue.length) }, worker));
     if (runId !== state.runId) return;
-    state.analysisDone = true;
     sortCards(); // sort once at the end so cards don't jump while someone is reading
     updateSummary();
   }
 
   function sortCards() {
     const list = $('#trial-list');
-    const cards = $$('.card', list);
-    cards.sort((a, b) => {
-      const fa = FIT_RANK[a.dataset.fit], fb = FIT_RANK[b.dataset.fit];
-      if (fa !== fb) return fa - fb;
-      const ta = state.trials.find((t) => t.nctId === a.dataset.nct);
-      const tb = state.trials.find((t) => t.nctId === b.dataset.nct);
-      return (ta.nearest?.distance ?? 999) - (tb.nearest?.distance ?? 999);
-    });
-    cards.forEach((c) => list.appendChild(c));
+    const find = (el) => state.trials.find((t) => t.nctId === el.dataset.nct);
+    $$('.card', list)
+      .sort((a, b) => (FIT_RANK[a.dataset.fit] - FIT_RANK[b.dataset.fit]) || byDistance(find(a), find(b)))
+      .forEach((c) => list.appendChild(c));
   }
 
   function updateSummary() {
     const total = state.trials.length;
-    const done = Object.keys(state.matches).length;
-    const good = Object.values(state.matches).filter((m) => m.fit === 'likely').length;
-    const title = $('#summary-title');
+    const matches = Object.values(state.matches);
+    const done = matches.length;
+    const count = (f) => matches.filter((m) => m.fit === f).length;
+    const good = count('likely');
     const first = `${plural(total, 'recruiting trial', 'recruiting trials')} within ${state.miles} miles`;
-    title.textContent = done < total
-      ? `${first}; reviewing…`
-      : `${first}; ${good} may be a good fit`;
+    $('#summary-title').textContent = done < total ? `${first}; reviewing…` : `${first}; ${good} may be a good fit`;
     const where = state.originLabel ? `Near ${state.originLabel}. ` : '';
     $('#summary-sub').textContent = total === 0
       ? `${where}Try a larger travel distance or a different condition.`
@@ -885,39 +1170,28 @@
     $('#progress-fill').style.width = `${pct}%`;
     $('#progress').setAttribute('aria-valuenow', String(pct));
     $('#progress').hidden = done >= total;
+    $('[data-count=all]').textContent = total;
+    for (const f of ['likely', 'possible', 'unlikely']) $(`[data-count=${f}]`).textContent = count(f);
   }
 
   // ---------- Filters ----------
-  document.addEventListener('click', (e) => {
-    const chip = e.target.closest('.chip');
-    if (!chip) return;
-    const f = chip.dataset.filter;
-    if (f === 'remote') state.filters.remote = !state.filters.remote;
-    else state.filters[f] = chip.dataset.value;
-    syncChips();
-    applyFilters();
-  });
-  $('#clear-filters').addEventListener('click', () => {
-    state.filters = { fit: 'all', dist: 'any', remote: false };
-    syncChips();
-    applyFilters();
-  });
+  $$('.seg [data-fit]').forEach((b) => b.addEventListener('click', () => { state.filters.fit = b.dataset.fit; syncFilters(); applyFilters(); }));
+  $('#dist-filter').addEventListener('change', (e) => { state.filters.dist = e.target.value; applyFilters(); });
+  $('#remote-toggle').addEventListener('click', () => { state.filters.remote = !state.filters.remote; syncFilters(); applyFilters(); });
+  $('#clear-filters').addEventListener('click', () => { state.filters = { fit: 'all', dist: 'any', remote: false }; syncFilters(); applyFilters(); });
 
-  function syncChips() {
-    $$('.chip').forEach((c) => {
-      const f = c.dataset.filter;
-      const on = f === 'remote' ? state.filters.remote : state.filters[f] === c.dataset.value;
-      c.setAttribute('aria-pressed', on ? 'true' : 'false');
-    });
+  function syncFilters() {
+    $$('.seg [data-fit]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.fit === state.filters.fit)));
+    $('#dist-filter').value = state.filters.dist;
+    $('#remote-toggle').setAttribute('aria-checked', String(state.filters.remote));
   }
 
   function applyFilters() {
     let shown = 0;
     for (const li of $$('#trial-list .card')) {
       const t = state.trials.find((x) => x.nctId === li.dataset.nct);
-      const fit = li.dataset.fit;
       let ok = true;
-      if (state.filters.fit !== 'all' && fit !== state.filters.fit) ok = false;
+      if (state.filters.fit !== 'all' && li.dataset.fit !== state.filters.fit) ok = false;
       if (state.filters.dist !== 'any') {
         const d = t.nearest?.distance;
         if (d == null || d > Number(state.filters.dist)) ok = false;
@@ -932,13 +1206,16 @@
   $('#new-search').addEventListener('click', () => {
     state.runId++;
     stopPlayback();
-    showScreen('screen-intake');
+    showStep(STEP_COUNT - 1, false);
+    showScreen('intake');
   });
   $('#crisis-back').addEventListener('click', () => {
     form.reset();
-    $('#persona').value = '';
+    state.usedPersona = false;
     state.runId++;
-    showScreen('screen-intake');
+    showStep(0, false);
+    showScreen('landing', { focus: false });
+    $('#hero-title').focus();
   });
 
   // ---------- Listen (translate + speak) ----------
@@ -1003,10 +1280,7 @@
         activePlayback = { li, stop: () => { audio.pause(); setListenBtn(li, 'idle'); } };
         setListenBtn(li, 'playing');
       });
-      audio.play().catch(() => {
-        setListenBtn(li, 'idle');
-        note.textContent = 'Press play to listen.';
-      });
+      audio.play().catch(() => { setListenBtn(li, 'idle'); note.textContent = 'Press play to listen.'; });
     } else if ('speechSynthesis' in window) {
       const u = new SpeechSynthesisUtterance(data.translated);
       u.lang = SPEECH_TAG[shownLang];
@@ -1044,10 +1318,10 @@
         <dt>ZIP code</dt><dd>${esc(p.zip)}</dd>
         <dt>In your words</dt><dd>${esc(p.freeText || 'Not provided')}</dd>
       </dl>
-      <h3>Software pre-screen: <span class="badge badge-${m.fit}">${ICON[m.fit]} ${FIT_LABEL[m.fit]}</span></h3>
+      <h3>Software pre-screen <span class="badge badge-${m.fit}">${ICON[m.fit]} ${FIT_LABEL[m.fit]}</span></h3>
       <h3>Reasons it may fit</h3>${listHtml(m.reasons_for)}
       <h3>Reasons it may not</h3>${listHtml(m.reasons_against)}
-      <h3>Things the study team would check</h3>${listHtml(m.unknowns)}`;
+      <h3>For the study team to check</h3>${listHtml(m.unknowns)}`;
     $('#cd-name').value = state.contact.name || '';
     $('#cd-reach').value = state.contact.reach || '';
     $('#cd-lang').textContent = LANG_NAME[sessionLang];
@@ -1065,7 +1339,7 @@
     if (!t) return;
     const li = document.getElementById(`card-${safeId(t.nctId)}`);
     const target = li && (li.querySelector('[data-role=contact]:not(:disabled)') || li.querySelector('[data-role=contact-status]'));
-    if (target) { if (!target.hasAttribute('tabindex') && target.tagName !== 'BUTTON') target.setAttribute('tabindex', '-1'); target.focus(); }
+    if (target) { if (target.tagName !== 'BUTTON') target.setAttribute('tabindex', '-1'); target.focus(); }
   });
 
   $('#contact-form').addEventListener('submit', async (e) => {
@@ -1087,8 +1361,7 @@
       state.contact = { name: $('#cd-name').value.trim(), reach };
       requestMap[t.nctId] = { id: r.id, status: r.status };
       sessionStorage.setItem('tf_requests', JSON.stringify(requestMap));
-      const li = document.getElementById(`card-${safeId(t.nctId)}`);
-      renderContactStatus(li, t.nctId);
+      renderContactStatus(document.getElementById(`card-${safeId(t.nctId)}`), t.nctId);
       dialog.close();
       startPolling();
     } catch (ex) {
@@ -1134,6 +1407,8 @@
       } catch { /* try again next tick */ }
     }, 3000);
   }
+
+  showStep(0, false);
 })();
 </script>
 </body>
