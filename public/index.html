@@ -1,0 +1,1140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TrialFinder: find clinical studies near you</title>
+<meta name="description" content="Find recruiting clinical trials near you, explained in plain language.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%230E6B66'/%3E%3Cpath d='M9 17l4.5 4.5L23 11' stroke='%23fff' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #FBF6EE;
+    --surface: #FFFFFF;
+    --surface-warm: #FFF9F1;
+    --ink: #1E2430;
+    --muted: #4A5160;
+    --border: #E2D7C7;
+    --primary: #0E6B66;
+    --primary-hover: #0A5450;
+    --primary-soft: #E3F1EF;
+    --accent: #B4532A;
+    --focus: #1D4ED8;
+    --likely-bg: #DDF3E4; --likely-ink: #14532D; --likely-border: #7FC296;
+    --possible-bg: #FDEFD3; --possible-ink: #6B3B00; --possible-border: #E2B25C;
+    --unlikely-bg: #EDEBE7; --unlikely-ink: #3A3A40; --unlikely-border: #C4BFB7;
+    --pending-bg: #EEF2F6; --pending-ink: #334155; --pending-border: #CBD5E1;
+    --radius: 14px;
+    --shadow: 0 1px 2px rgba(30, 36, 48, .06), 0 4px 16px rgba(30, 36, 48, .06);
+  }
+  * { box-sizing: border-box; }
+  html { font-size: 18px; }
+  body {
+    margin: 0; min-height: 100vh; display: flex; flex-direction: column;
+    background: var(--bg); color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.6;
+  }
+  h1, h2, h3 { line-height: 1.25; margin: 0 0 .5rem; }
+  h1 { font-size: 2rem; }
+  h2 { font-size: 1.4rem; }
+  h3 { font-size: 1.15rem; }
+  p { margin: 0 0 1rem; }
+  a { color: var(--primary); text-underline-offset: 3px; }
+  a:hover { color: var(--primary-hover); }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: 6px; }
+  [hidden] { display: none !important; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+  .skip { position: absolute; left: -999px; top: 0; background: var(--ink); color: #fff; padding: .6rem 1rem; z-index: 100; border-radius: 0 0 8px 0; }
+  .skip:focus { left: 0; color: #fff; }
+  svg.icon { width: 1.15em; height: 1.15em; flex: none; vertical-align: -0.2em; }
+
+  /* Header / footer */
+  .site-header { background: var(--surface); border-bottom: 1px solid var(--border); }
+  .site-header .wrap { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-top: .8rem; padding-bottom: .8rem; }
+  .brand { display: flex; align-items: center; gap: .65rem; color: var(--ink); text-decoration: none; font-weight: 750; font-size: 1.3rem; letter-spacing: -.01em; }
+  .brand:hover { color: var(--ink); }
+  .brand-mark { width: 40px; height: 40px; }
+  .tagline { color: var(--muted); font-size: .9rem; margin: 0; }
+  .wrap { width: 100%; max-width: 980px; margin: 0 auto; padding-left: 1.25rem; padding-right: 1.25rem; }
+  main { flex: 1; padding: 2rem 0 3rem; }
+  main:focus { outline: none; }
+  .site-footer { background: #F3ECE1; border-top: 1px solid var(--border); padding: 1.1rem 0; font-size: .95rem; color: var(--ink); }
+  .site-footer p { margin: 0; }
+  .site-footer .wrap { display: flex; gap: 1rem; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+  .footer-safety { font-weight: 600; }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+    min-height: 48px; padding: .6rem 1.2rem; border-radius: 999px; border: 2px solid transparent;
+    font: inherit; font-weight: 650; font-size: 1rem; cursor: pointer; text-decoration: none; line-height: 1.2;
+  }
+  .btn:disabled { cursor: not-allowed; opacity: .55; }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: var(--primary-hover); color: #fff; }
+  .btn-secondary { background: var(--surface); color: var(--primary); border-color: var(--primary); }
+  .btn-secondary:hover:not(:disabled) { background: var(--primary-soft); }
+  .btn-ghost { background: transparent; color: var(--ink); border-color: var(--border); }
+  .btn-ghost:hover:not(:disabled) { background: var(--surface); }
+  .btn-lg { min-height: 56px; font-size: 1.1rem; padding: .8rem 1.8rem; }
+  .link-btn { background: none; border: 0; padding: .25rem; font: inherit; color: var(--primary); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+
+  /* Cards / panels */
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.6rem; }
+  .lead { font-size: 1.15rem; color: var(--muted); max-width: 46rem; }
+
+  /* Intake form */
+  .intake-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem 1.5rem; }
+  .field { display: flex; flex-direction: column; gap: .35rem; }
+  .field.full { grid-column: 1 / -1; }
+  label, legend { font-weight: 650; }
+  .help { color: var(--muted); font-size: .92rem; margin: 0; font-weight: 400; }
+  input[type=text], input[type=number], input[type=email], input[type=tel], select, textarea {
+    font: inherit; color: var(--ink); background: #fff; border: 2px solid #B9AE9E; border-radius: 10px;
+    padding: .6rem .8rem; min-height: 50px; width: 100%;
+  }
+  textarea { min-height: 140px; resize: vertical; }
+  input:focus-visible, select:focus-visible, textarea:focus-visible { border-color: var(--focus); outline: 3px solid rgba(29,78,216,.35); outline-offset: 0; }
+  fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+  legend { padding: 0; margin-bottom: .35rem; }
+  .choice-row { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .choice { position: relative; }
+  .choice input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+  .choice span {
+    display: inline-flex; align-items: center; gap: .4rem; min-height: 48px; padding: .5rem 1rem;
+    border: 2px solid #B9AE9E; border-radius: 999px; background: #fff; font-weight: 550;
+  }
+  .choice input:checked + span { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .choice input:checked + span::before { content: "✓"; font-weight: 800; }
+  .choice input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 3px; }
+  .persona-box { background: var(--surface-warm); border: 1px dashed #D3B48F; border-radius: var(--radius); padding: 1rem 1.2rem; margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: .75rem 1.25rem; align-items: end; }
+  .persona-box .field { flex: 1 1 280px; }
+  .safety-note { display: flex; gap: .6rem; align-items: flex-start; background: #FFF4E5; border-left: 4px solid var(--accent); padding: .7rem .9rem; border-radius: 8px; font-size: .95rem; margin: .5rem 0 0; }
+  .form-actions { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 1.75rem; }
+  .form-error { color: #9F1D1D; font-weight: 600; margin: 0; }
+
+  /* Loading */
+  .loading { text-align: center; padding: 3rem 1rem; }
+  .pulse { width: 72px; height: 72px; margin: 0 auto 1.5rem; border-radius: 50%; background: var(--primary-soft); display: grid; place-items: center; animation: pulse 1.8s ease-in-out infinite; }
+  .pulse svg { width: 36px; height: 36px; color: var(--primary); }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+  .steps { list-style: none; padding: 0; margin: 1rem auto 0; max-width: 26rem; text-align: left; }
+  .steps li { display: flex; gap: .6rem; align-items: center; padding: .35rem 0; color: var(--muted); }
+  .steps li.active { color: var(--ink); font-weight: 650; }
+  .steps li.done { color: var(--likely-ink); }
+
+  /* Crisis */
+  body.crisis-mode .site-header { display: none; }
+  body.crisis-mode main { padding: 0; display: flex; }
+  .crisis { flex: 1; display: flex; align-items: center; justify-content: center; min-height: calc(100vh - 90px); background: linear-gradient(180deg, #E6F2EF 0%, #F6F1FA 100%); padding: 2rem 1.25rem; }
+  .crisis-inner { max-width: 40rem; text-align: center; }
+  .crisis-inner h1 { font-size: 2.2rem; margin-bottom: 1rem; }
+  .crisis-inner h1:focus { outline: none; }
+  .crisis-lead { font-size: 1.35rem; margin-bottom: 1.75rem; }
+  .crisis-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-bottom: 1.5rem; }
+  .btn-crisis { background: #0B5C57; color: #fff; font-size: 1.25rem; min-height: 64px; padding: .9rem 2.2rem; }
+  .btn-crisis:hover { background: #084642; color: #fff; }
+  .emergency { font-size: 1.15rem; font-weight: 650; background: #fff; border-radius: 12px; padding: .8rem 1rem; display: inline-block; }
+  .heart { width: 64px; height: 64px; color: #0B5C57; margin-bottom: 1rem; }
+
+  /* Results */
+  .results-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  .sample-badge { display: inline-flex; align-items: center; gap: .4rem; background: #FFF1C2; color: #5C4200; border: 2px solid #E0B93E; border-radius: 999px; padding: .3rem .9rem; font-weight: 700; font-size: .92rem; }
+  .summary-bar { background: var(--surface); border: 1px solid var(--border); border-left: 6px solid var(--primary); border-radius: var(--radius); padding: 1.1rem 1.4rem; box-shadow: var(--shadow); margin-bottom: 1rem; }
+  .summary-bar h1 { font-size: 1.45rem; margin: 0 0 .25rem; }
+  .summary-bar h1:focus { outline: none; }
+  .summary-sub { color: var(--muted); margin: 0; }
+  .progress { height: 8px; background: #EFE7DA; border-radius: 99px; overflow: hidden; margin-top: .8rem; }
+  .progress > div { height: 100%; width: 0; background: var(--primary); transition: width .4s ease; }
+  .note { background: #FFF9E8; border: 1px solid #EAD7A4; border-radius: 10px; padding: .7rem 1rem; font-size: .95rem; }
+  .filters { display: flex; flex-direction: column; gap: .6rem; margin: 1.25rem 0 1rem; }
+  .chip-row { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+  .chip-label { font-weight: 700; min-width: 5.5rem; }
+  .chip { min-height: 44px; padding: .35rem .95rem; border-radius: 999px; border: 2px solid #B9AE9E; background: #fff; font: inherit; font-size: .95rem; font-weight: 600; cursor: pointer; color: var(--ink); display: inline-flex; gap: .35rem; align-items: center; }
+  .chip[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .chip[aria-pressed="true"]::before { content: "✓"; }
+  .not-decision { display: flex; gap: .6rem; align-items: flex-start; color: var(--muted); font-size: .95rem; }
+  .trial-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 1.1rem; }
+
+  /* Trial card */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.3rem 1.4rem; }
+  .card[data-fit="likely"] { border-left: 6px solid var(--likely-border); }
+  .card[data-fit="possible"] { border-left: 6px solid var(--possible-border); }
+  .card[data-fit="unlikely"] { border-left: 6px solid var(--unlikely-border); }
+  .card-top { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-bottom: .6rem; }
+  .badge { display: inline-flex; align-items: center; gap: .4rem; padding: .25rem .8rem; border-radius: 999px; font-weight: 750; font-size: .95rem; border: 2px solid; }
+  .badge-likely { background: var(--likely-bg); color: var(--likely-ink); border-color: var(--likely-border); }
+  .badge-possible { background: var(--possible-bg); color: var(--possible-ink); border-color: var(--possible-border); }
+  .badge-unlikely { background: var(--unlikely-bg); color: var(--unlikely-ink); border-color: var(--unlikely-border); }
+  .badge-pending { background: var(--pending-bg); color: var(--pending-ink); border-color: var(--pending-border); }
+  .tag { display: inline-flex; align-items: center; gap: .3rem; padding: .2rem .7rem; border-radius: 999px; font-size: .88rem; font-weight: 600; background: var(--primary-soft); color: #0B4F4B; }
+  .tag-sample { background: #FFF1C2; color: #5C4200; }
+  .card-title { font-size: 1.2rem; margin-bottom: .35rem; }
+  .card-meta { display: flex; flex-wrap: wrap; gap: .25rem 1rem; color: var(--muted); font-size: .95rem; margin-bottom: .8rem; }
+  .card-meta span { display: inline-flex; align-items: center; gap: .3rem; }
+  .card-summary { margin-bottom: .8rem; }
+  .card-summary p { margin: 0; }
+  .from-listing { font-size: .88rem; color: var(--muted); font-style: italic; margin-top: .3rem !important; }
+  .skeleton { display: block; height: 1em; background: linear-gradient(90deg, #F1EBE1 25%, #F8F3EB 50%, #F1EBE1 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 6px; margin: .45rem 0; }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+  details { border-top: 1px solid var(--border); padding: .2rem 0; }
+  details summary { cursor: pointer; font-weight: 650; padding: .55rem 0; min-height: 44px; display: flex; align-items: center; gap: .5rem; list-style: none; }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::before { content: "▸"; color: var(--primary); transition: transform .15s; display: inline-block; }
+  details[open] summary::before { transform: rotate(90deg); }
+  .why-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; padding: .3rem 0 .8rem; }
+  .why-grid h4 { display: flex; align-items: center; gap: .35rem; margin: 0 0 .35rem; font-size: 1rem; }
+  .why-grid ul, .questions ol { margin: 0; padding-left: 1.2rem; }
+  .why-grid li, .questions li { margin-bottom: .3rem; }
+  .why-for h4 { color: var(--likely-ink); }
+  .why-against h4 { color: #8A2E12; }
+  .why-unknown h4 { color: var(--pending-ink); }
+  .questions ol { padding-bottom: .8rem; }
+  .contact-line { font-size: .95rem; color: var(--muted); margin: 0 0 .8rem; }
+  .card-actions { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; justify-content: space-between; border-top: 1px solid var(--border); padding-top: 1rem; margin-top: .2rem; }
+  .listen-group { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+  .listen-group select { width: auto; min-width: 12rem; min-height: 48px; }
+  .readalong { margin-top: 1rem; background: var(--surface-warm); border: 1px solid #EAD9C2; border-radius: 12px; padding: 1rem 1.1rem; }
+  .readalong-label { font-weight: 700; font-size: .9rem; color: var(--muted); margin: 0 0 .4rem; display: flex; gap: .4rem; align-items: center; }
+  .readalong-text { font-size: 1.1rem; white-space: pre-line; margin-bottom: .6rem; }
+  .readalong audio { width: 100%; margin-top: .3rem; }
+  .readalong-note { font-size: .9rem; color: var(--muted); margin: .4rem 0 0; }
+  .contact-status { margin-top: 1rem; display: flex; gap: .7rem; align-items: flex-start; border-radius: 12px; padding: .85rem 1rem; font-weight: 600; }
+  .contact-status p { margin: 0; }
+  .contact-status .sub { font-weight: 400; font-size: .95rem; }
+  .status-sent { background: #EAF1FB; color: #1E3A6E; border: 1px solid #BFD3F2; }
+  .status-approved { background: var(--likely-bg); color: var(--likely-ink); border: 1px solid var(--likely-border); }
+  .status-declined { background: var(--unlikely-bg); color: var(--unlikely-ink); border: 1px solid var(--unlikely-border); }
+  .empty { text-align: center; padding: 2rem; }
+
+  /* Dialog */
+  dialog { border: 0; border-radius: 18px; padding: 0; width: min(720px, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); box-shadow: 0 20px 60px rgba(0,0,0,.25); color: var(--ink); }
+  dialog::backdrop { background: rgba(30, 36, 48, .55); }
+  .dialog-body { padding: 1.6rem; }
+  .prescreen { background: var(--surface-warm); border: 1px solid #EAD9C2; border-radius: 12px; padding: 1rem 1.2rem; margin: 1rem 0; }
+  .prescreen h3 { font-size: 1rem; margin: .9rem 0 .3rem; }
+  .prescreen h3:first-child { margin-top: 0; }
+  .prescreen dl { display: grid; grid-template-columns: max-content 1fr; gap: .2rem 1rem; margin: 0; }
+  .prescreen dt { font-weight: 650; }
+  .prescreen dd { margin: 0; }
+  .prescreen ul { margin: 0; padding-left: 1.2rem; }
+  .consent { display: flex; gap: .75rem; align-items: flex-start; background: #fff; border: 2px solid var(--border); border-radius: 12px; padding: .9rem 1rem; margin: 1rem 0; font-weight: 500; cursor: pointer; }
+  .consent input { width: 26px; height: 26px; flex: none; margin-top: .15rem; accent-color: var(--primary); }
+  .dialog-actions { display: flex; gap: .75rem; justify-content: flex-end; flex-wrap: wrap; }
+  .contact-fields { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem 1rem; }
+
+  @media (max-width: 720px) {
+    h1 { font-size: 1.6rem; }
+    .intake-grid, .contact-fields { grid-template-columns: 1fr; }
+    .why-grid { grid-template-columns: 1fr; }
+    .tagline { display: none; }
+    .card { padding: 1.1rem; }
+    .card-actions { flex-direction: column; align-items: stretch; }
+    .listen-group { flex-direction: column; align-items: stretch; }
+    .listen-group select { width: 100%; }
+    .chip-label { min-width: 100%; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to main content</a>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="/" aria-label="TrialFinder home">
+      <svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true">
+        <circle cx="20" cy="20" r="19" fill="#0E6B66"/>
+        <circle cx="18" cy="18" r="8.5" fill="none" stroke="#FBF6EE" stroke-width="3"/>
+        <path d="M24.5 24.5l6 6" stroke="#FBF6EE" stroke-width="3.4" stroke-linecap="round"/>
+        <path d="M14.5 18.2l2.6 2.6 4.6-5" stroke="#F2B48C" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      TrialFinder
+    </a>
+    <p class="tagline">Research studies near you, in plain language.</p>
+  </div>
+</header>
+
+<main id="main" tabindex="-1">
+  <div class="wrap">
+
+    <!-- ============ INTAKE ============ -->
+    <section id="screen-intake" aria-labelledby="intake-title">
+      <h1 id="intake-title" tabindex="-1">Find research studies near you</h1>
+      <p class="lead">Answer a few questions. We'll look for clinical trials that are looking for volunteers near you, and explain each one in plain language.</p>
+
+      <div class="persona-box">
+        <div class="field">
+          <label for="persona">Load sample patient</label>
+          <select id="persona">
+            <option value="">Choose a sample patient…</option>
+            <option value="maria">Maria, 42 · Queens · depression · speaks Spanish</option>
+            <option value="james">James, 67 · Brooklyn · depression and type 2 diabetes</option>
+            <option value="priya">Priya, 29 · Manhattan · anxiety · pregnant</option>
+            <optgroup label="Demo safety test">
+              <option value="crisis">Crisis-check test (synthetic sentence)</option>
+            </optgroup>
+          </select>
+        </div>
+        <p class="help">All sample patients are invented for this demo.</p>
+      </div>
+
+      <form id="intake-form" class="panel" novalidate>
+        <div class="intake-grid">
+          <div class="field full">
+            <label for="condition">What health condition do you want to find studies for?</label>
+            <input type="text" id="condition" name="condition" list="condition-list" required autocomplete="off" placeholder="For example: depression" aria-describedby="condition-help">
+            <datalist id="condition-list">
+              <option value="Depression"><option value="Treatment-resistant depression"><option value="Generalized anxiety disorder">
+              <option value="Postpartum depression"><option value="Bipolar depression"><option value="PTSD">
+            </datalist>
+            <p class="help" id="condition-help">Use everyday words. You don't need the medical name.</p>
+          </div>
+
+          <div class="field">
+            <label for="age">Age</label>
+            <input type="number" id="age" name="age" min="18" max="110" inputmode="numeric" required aria-describedby="age-help">
+            <p class="help" id="age-help">This demo is for adults (18 and older).</p>
+          </div>
+
+          <fieldset class="field">
+            <legend>Sex</legend>
+            <div class="choice-row">
+              <label class="choice"><input type="radio" name="sex" value="female" required><span>Female</span></label>
+              <label class="choice"><input type="radio" name="sex" value="male"><span>Male</span></label>
+              <label class="choice"><input type="radio" name="sex" value="other"><span>Another / prefer not to say</span></label>
+            </div>
+            <p class="help">Some studies are only for one sex.</p>
+          </fieldset>
+
+          <div class="field">
+            <label for="zip">ZIP code</label>
+            <input type="text" id="zip" name="zip" inputmode="numeric" maxlength="5" pattern="\d{5}" required autocomplete="postal-code" aria-describedby="zip-help">
+            <p class="help" id="zip-help">New York City ZIP codes work best in this demo.</p>
+          </div>
+
+          <fieldset class="field">
+            <legend>How far can you travel?</legend>
+            <div class="choice-row">
+              <label class="choice"><input type="radio" name="miles" value="5"><span>5 miles</span></label>
+              <label class="choice"><input type="radio" name="miles" value="10" checked><span>10 miles</span></label>
+              <label class="choice"><input type="radio" name="miles" value="25"><span>25 miles</span></label>
+              <label class="choice"><input type="radio" name="miles" value="50"><span>50 miles</span></label>
+            </div>
+          </fieldset>
+
+          <div class="field full">
+            <label for="freeText">Tell us about your health in your own words <span class="help">(optional)</span></label>
+            <textarea id="freeText" name="freeText" aria-describedby="free-help free-safety" placeholder="For example: medicines you've tried, other health conditions, or anything else you'd want a study team to know."></textarea>
+            <p class="help" id="free-help">Please don't include your full name or address here.</p>
+            <p class="safety-note" id="free-safety">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.3C.9 8.3 3 4.5 6.7 4.5c2 0 3.5 1.1 4.3 2.4.8-1.3 2.3-2.4 4.3-2.4 3.7 0 5.8 3.8 4.3 7.2C19.5 16.4 12 21 12 21z"/></svg>
+              <span>If you're thinking about hurting yourself, you can call or text <a href="tel:988"><strong>988</strong></a> any time.</span>
+            </p>
+          </div>
+
+          <div class="field">
+            <label for="intake-lang">Language for listening to results</label>
+            <select id="intake-lang" class="lang-select"></select>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary btn-lg">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+            Find studies
+          </button>
+          <p id="form-error" class="form-error" role="alert"></p>
+        </div>
+      </form>
+    </section>
+
+    <!-- ============ LOADING ============ -->
+    <section id="screen-loading" class="loading" hidden aria-labelledby="loading-title">
+      <div class="pulse" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+      </div>
+      <h1 id="loading-title" tabindex="-1">Looking for studies…</h1>
+      <p class="lead" style="margin: 0 auto;">This usually takes a few seconds.</p>
+      <ol class="steps" aria-live="polite">
+        <li id="step-1" class="active">Reading what you shared</li>
+        <li id="step-2">Searching ClinicalTrials.gov near you</li>
+      </ol>
+    </section>
+
+  </div>
+
+  <!-- ============ CRISIS ============ -->
+  <section id="screen-crisis" class="crisis" hidden aria-labelledby="crisis-title">
+    <div class="crisis-inner">
+      <svg class="heart" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.3C.9 8.3 3 4.5 6.7 4.5c2 0 3.5 1.1 4.3 2.4.8-1.3 2.3-2.4 4.3-2.4 3.7 0 5.8 3.8 4.3 7.2C19.5 16.4 12 21 12 21z"/></svg>
+      <h1 id="crisis-title" tabindex="-1">You don't have to go through this alone.</h1>
+      <p class="crisis-lead">Call or text 988 to reach the 988 Suicide &amp; Crisis Lifeline, any time.</p>
+      <div class="crisis-actions">
+        <a class="btn btn-crisis" href="tel:988">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 006.6 6.6l2.2-2.2a1 1 0 011-.25 11.4 11.4 0 003.6.57 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.57a1 1 0 01-.25 1z"/></svg>
+          Call 988
+        </a>
+        <a class="btn btn-secondary btn-lg" href="sms:988">Text 988</a>
+      </div>
+      <p class="crisis-lead" style="font-size:1.05rem">It's free and confidential. Para español, oprima 2.</p>
+      <p class="emergency">If you are in immediate danger, call 911.</p>
+      <p style="margin-top:2rem"><button type="button" class="link-btn" id="crisis-back">Return to the start</button></p>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <!-- ============ RESULTS ============ -->
+    <section id="screen-results" hidden aria-labelledby="summary-title">
+      <div class="results-head">
+        <button type="button" id="new-search" class="btn btn-ghost">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Change my answers
+        </button>
+        <span id="sample-badge" class="sample-badge" hidden>
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2L1 21h22L12 2zm1 15h-2v-2h2v2zm0-4h-2V9h2v4z"/></svg>
+          Showing sample data
+        </span>
+      </div>
+
+      <div class="summary-bar">
+        <h1 id="summary-title" tabindex="-1">Finding studies…</h1>
+        <p class="summary-sub" id="summary-sub" aria-live="polite"></p>
+        <div class="progress" id="progress" role="progressbar" aria-label="Studies reviewed" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="progress-fill"></div></div>
+      </div>
+      <p id="source-note" class="note" hidden></p>
+
+      <div class="filters" role="group" aria-label="Filter studies">
+        <div class="chip-row" role="group" aria-labelledby="fit-filter-label">
+          <span class="chip-label" id="fit-filter-label">Fit</span>
+          <button type="button" class="chip" data-filter="fit" data-value="all" aria-pressed="true">All</button>
+          <button type="button" class="chip" data-filter="fit" data-value="likely" aria-pressed="false">May be a good fit</button>
+          <button type="button" class="chip" data-filter="fit" data-value="possible" aria-pressed="false">Possible fit</button>
+          <button type="button" class="chip" data-filter="fit" data-value="unlikely" aria-pressed="false">Probably not</button>
+        </div>
+        <div class="chip-row" role="group" aria-labelledby="dist-filter-label" id="dist-chips">
+          <span class="chip-label" id="dist-filter-label">Distance</span>
+        </div>
+        <div class="chip-row">
+          <span class="chip-label">Visits</span>
+          <button type="button" class="chip" data-filter="remote" aria-pressed="false">Remote-friendly only</button>
+        </div>
+      </div>
+
+      <p class="not-decision">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v6M12 16.5v.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+        <span>These results are not an eligibility decision. Only a study's team can decide whether a study is right for you.</span>
+      </p>
+
+      <ol id="trial-list" class="trial-list" aria-label="Studies"></ol>
+      <div id="empty-filter" class="empty panel" hidden>
+        <p>No studies match these filters.</p>
+        <button type="button" class="btn btn-secondary" id="clear-filters">Show all studies</button>
+      </div>
+    </section>
+  </div>
+</main>
+
+<!-- ============ CONTACT REVIEW DIALOG ============ -->
+<dialog id="contact-dialog" aria-labelledby="contact-title">
+  <form id="contact-form" class="dialog-body" novalidate>
+    <h2 id="contact-title">Review before sending</h2>
+    <p>Here is what we'll send to the team running <strong id="cd-trial"></strong>. A coordinator will review it and may reach out to talk with you. <strong>This is not enrollment</strong>, and you can say no at any time.</p>
+
+    <div class="prescreen" id="cd-prescreen"></div>
+
+    <fieldset>
+      <legend>How should the study team reach you?</legend>
+      <div class="contact-fields">
+        <div class="field">
+          <label for="cd-name">First name</label>
+          <input type="text" id="cd-name" autocomplete="given-name">
+        </div>
+        <div class="field">
+          <label for="cd-reach">Phone or email</label>
+          <input type="text" id="cd-reach" autocomplete="tel" required>
+        </div>
+      </div>
+      <p class="help" style="margin-top:.4rem">Preferred language: <strong id="cd-lang"></strong></p>
+    </fieldset>
+
+    <label class="consent">
+      <input type="checkbox" id="cd-consent">
+      <span>I agree to share the information above with this study's team so they can contact me. I understand that TrialFinder is software and that this is not an enrollment or eligibility decision.</span>
+    </label>
+
+    <p id="cd-error" class="form-error" role="alert"></p>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-ghost" id="cd-cancel">Cancel</button>
+      <button type="submit" class="btn btn-primary" id="cd-send" disabled>
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+        Send to study team
+      </button>
+    </div>
+  </form>
+</dialog>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <p class="footer-safety">TrialFinder is software, not a doctor. It does not diagnose or decide eligibility. All patient data in this demo is synthetic.</p>
+    <p><a href="/coordinator.html">Study coordinator view (demo)</a></p>
+  </div>
+</footer>
+
+<script>
+(() => {
+  'use strict';
+
+  // ---------- Constants ----------
+  const LANGS = [
+    ['en', 'English'],
+    ['es', 'Español (Spanish)'],
+    ['zh', '中文 (Mandarin Chinese)'],
+    ['ru', 'Русский (Russian)'],
+    ['ko', '한국어 (Korean)'],
+    ['ar', 'العربية (Arabic)'],
+    ['hi', 'हिन्दी (Hindi)'],
+  ];
+  const LANG_NAME = Object.fromEntries(LANGS);
+  const LANG_TAG = { en: 'en', es: 'es', zh: 'zh-Hans', ru: 'ru', ko: 'ko', ar: 'ar', hi: 'hi' };
+  const SPEECH_TAG = { en: 'en-US', es: 'es-US', zh: 'zh-CN', ru: 'ru-RU', ko: 'ko-KR', ar: 'ar-SA', hi: 'hi-IN' };
+  const FIT_RANK = { likely: 0, possible: 1, unlikely: 2, pending: 3 };
+  const SEX_LABEL = { female: 'Female', male: 'Male', other: 'Not specified' };
+
+  const ICON = {
+    likely: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M7 12.5l3.2 3.2L17 9" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    possible: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12 3a9 9 0 010 18z" fill="currentColor"/></svg>',
+    unlikely: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M7.5 12h9" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>',
+    pending: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg>',
+    pin: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a7 7 0 00-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 00-7-7zm0 9.5A2.5 2.5 0 1112 6.5a2.5 2.5 0 010 5z"/></svg>',
+    home: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3l9 8h-3v9h-5v-6h-2v6H6v-9H3z"/></svg>',
+    speaker: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3z"/><path d="M16 8.5a5 5 0 010 7M18.5 6a8.5 8.5 0 010 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>',
+    stop: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></svg>',
+    send: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>',
+    phone: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 006.6 6.6l2.2-2.2a1 1 0 011-.25 11.4 11.4 0 003.6.57 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.57a1 1 0 01-.25 1z"/></svg>',
+    info: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 11v6M12 7.5v.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>',
+    plus: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M12 7.5v9M7.5 12h9" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>',
+    minus: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M7.5 12h9" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>',
+    question: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M9.5 9.5a2.5 2.5 0 114 2c-1 .7-1.5 1.2-1.5 2.5M12 17v.3" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>',
+  };
+  const FIT_LABEL = { likely: 'May be a good fit', possible: 'Possible fit', unlikely: 'Probably not', pending: 'Reviewing…' };
+
+  const PERSONAS = {
+    maria: {
+      name: 'Maria', reach: '(718) 555-0142', language: 'es',
+      condition: 'Depression', age: 42, sex: 'female', zip: '11368', miles: '10',
+      freeText: "I've had depression for about three years. My doctor tried two SSRI medicines, first sertraline and then escitalopram, and neither one helped much. I feel tired and sad most days, and it's hard to keep up with work and my kids. I'm otherwise healthy and not pregnant. I'm more comfortable speaking Spanish.",
+    },
+    james: {
+      name: 'James', reach: '(347) 555-0187', language: 'en',
+      condition: 'Depression', age: 67, sex: 'male', zip: '11226', miles: '10',
+      freeText: "I'm retired and have been depressed on and off for years, and it got worse after my wife passed two years ago. I also have type 2 diabetes and take metformin; my blood sugar is mostly under control. I tried sertraline and then bupropion, but I still don't enjoy things like I used to. I can't travel far anymore, so something close by or by video would be best.",
+    },
+    priya: {
+      name: 'Priya', reach: 'priya.sample@example.com', language: 'en',
+      condition: 'Generalized anxiety disorder', age: 29, sex: 'female', zip: '10025', miles: '10',
+      freeText: "I'm 29 and about 20 weeks pregnant with my first child. I've had generalized anxiety since college. Therapy helped some, but the worry has gotten worse during pregnancy and I have trouble sleeping. My OB asked me to avoid starting new medicines unless we really need to.",
+    },
+    crisis: {
+      name: 'Test', reach: '(718) 555-0100', language: 'en',
+      condition: 'Depression', age: 42, sex: 'female', zip: '11368', miles: '10',
+      freeText: "Nothing has helped and I'm so tired of it. Lately I keep thinking everyone would be better off without me, and I've started thinking about how I would end my life.",
+    },
+  };
+
+  // ---------- State ----------
+  const state = {
+    profile: null,
+    contact: { name: '', reach: '' },
+    trials: [],
+    matches: {},
+    miles: 10,
+    runId: 0,
+    analysisDone: false,
+    filters: { fit: 'all', dist: 'any', remote: false },
+    dialogTrial: null,
+  };
+  let sessionLang = sessionStorage.getItem('tf_lang') || 'en';
+  let requestMap = JSON.parse(sessionStorage.getItem('tf_requests') || '{}'); // nctId -> {id, status}
+  let pollTimer = null;
+  let activePlayback = null; // { stop() }
+
+  // ---------- Utilities ----------
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const safeId = (s) => String(s).replace(/[^A-Za-z0-9_-]/g, '_');
+  const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+
+  async function api(path, body) {
+    const res = await fetch(path, body === undefined ? {} : {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+    return data;
+  }
+
+  function showScreen(id) {
+    for (const s of ['screen-intake', 'screen-loading', 'screen-crisis', 'screen-results']) {
+      document.getElementById(s).hidden = s !== id;
+    }
+    document.body.classList.toggle('crisis-mode', id === 'screen-crisis');
+    window.scrollTo(0, 0);
+    const heading = document.getElementById(id).querySelector('h1');
+    if (heading) heading.focus();
+  }
+
+  function distanceText(t) {
+    const d = t.nearest && t.nearest.distance;
+    if (d == null) return 'Distance not listed';
+    return d < 1 ? 'Less than 1 mile away' : `${d.toFixed(1)} miles away`;
+  }
+
+  function phaseText(phases) {
+    const p = (phases || []).filter((x) => x !== 'NA');
+    if (!p.length) return '';
+    return p.map((x) => x.replace('EARLY_PHASE', 'Early phase ').replace('PHASE', 'Phase ')).join(' / ');
+  }
+
+  // ---------- Language (remembered for the session) ----------
+  function fillLangSelect(sel) {
+    sel.innerHTML = LANGS.map(([code, name]) => `<option value="${code}" lang="${LANG_TAG[code]}">${esc(name)}</option>`).join('');
+    sel.value = sessionLang;
+  }
+  function setSessionLang(code) {
+    sessionLang = LANG_NAME[code] ? code : 'en';
+    sessionStorage.setItem('tf_lang', sessionLang);
+    $$('.lang-select').forEach((s) => { s.value = sessionLang; });
+  }
+  document.addEventListener('change', (e) => {
+    if (e.target.classList && e.target.classList.contains('lang-select')) setSessionLang(e.target.value);
+  });
+
+  // ---------- Intake ----------
+  const form = $('#intake-form');
+  fillLangSelect($('#intake-lang'));
+
+  $('#persona').addEventListener('change', (e) => {
+    const p = PERSONAS[e.target.value];
+    if (!p) return;
+    form.condition.value = p.condition;
+    form.age.value = p.age;
+    form.zip.value = p.zip;
+    form.freeText.value = p.freeText;
+    $$('input[name=sex]', form).forEach((r) => { r.checked = r.value === p.sex; });
+    $$('input[name=miles]', form).forEach((r) => { r.checked = r.value === p.miles; });
+    state.contact = { name: p.name, reach: p.reach };
+    setSessionLang(p.language);
+    $('#form-error').textContent = '';
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const err = $('#form-error');
+    const sex = (form.querySelector('input[name=sex]:checked') || {}).value;
+    const miles = (form.querySelector('input[name=miles]:checked') || {}).value || '10';
+    const profile = {
+      condition: form.condition.value.trim(),
+      age: parseInt(form.age.value, 10),
+      sex: sex || '',
+      zip: form.zip.value.trim(),
+      miles: parseInt(miles, 10),
+      freeText: form.freeText.value.trim(),
+    };
+    const problems = [];
+    if (!profile.condition) problems.push({ el: form.condition, msg: 'Please enter a health condition.' });
+    if (!(profile.age >= 18 && profile.age <= 110)) problems.push({ el: form.age, msg: 'Please enter an age between 18 and 110.' });
+    if (!profile.sex) problems.push({ el: form.querySelector('input[name=sex]'), msg: 'Please choose an option for sex.' });
+    if (!/^\d{5}$/.test(profile.zip)) problems.push({ el: form.zip, msg: 'Please enter a 5-digit ZIP code.' });
+    $$('[aria-invalid]', form).forEach((el) => el.removeAttribute('aria-invalid'));
+    if (problems.length) {
+      err.textContent = problems.map((p) => p.msg).join(' ');
+      problems.forEach((p) => p.el.setAttribute('aria-invalid', 'true'));
+      problems[0].el.focus();
+      return;
+    }
+    err.textContent = '';
+    if (!$('#persona').value) state.contact = { name: '', reach: '' };
+    await runSearch(profile);
+  });
+
+  async function runSearch(profile) {
+    const runId = ++state.runId;
+    stopPlayback();
+    state.profile = profile;
+    state.matches = {};
+    state.analysisDone = false;
+    state.filters = { fit: 'all', dist: 'any', remote: false };
+
+    showScreen('screen-loading');
+    $('#step-1').className = 'active';
+    $('#step-2').className = '';
+    const stepTimer = setTimeout(() => {
+      $('#step-1').className = 'done';
+      $('#step-2').className = 'active';
+    }, 1800);
+
+    let data;
+    try {
+      data = await api('/api/search', { profile });
+    } catch (e) {
+      clearTimeout(stepTimer);
+      showScreen('screen-intake');
+      $('#form-error').textContent = `Sorry, something went wrong: ${e.message}`;
+      return;
+    }
+    clearTimeout(stepTimer);
+    if (runId !== state.runId) return;
+
+    // Crisis: stop here. No trials are shown.
+    if (data.crisis) {
+      showScreen('screen-crisis');
+      return;
+    }
+
+    state.trials = data.trials || [];
+    state.miles = data.miles;
+    renderResults(data);
+    showScreen('screen-results');
+    analyzeAll(runId);
+  }
+
+  // ---------- Results ----------
+  function renderResults(data) {
+    $('#sample-badge').hidden = data.source !== 'sample';
+    const note = $('#source-note');
+    const notes = [];
+    if (data.source === 'sample') notes.push(`${data.note} These studies are made-up examples so you can see how TrialFinder works.`);
+    if (data.origin && data.origin.approximate) notes.push("We didn't recognize that ZIP code, so we searched near Midtown Manhattan.");
+    note.textContent = notes.join(' ');
+    note.hidden = !notes.length;
+    state.originLabel = data.origin ? data.origin.label : '';
+
+    // Distance chips: only distances up to the search radius.
+    const distRow = $('#dist-chips');
+    $$('.chip', distRow).forEach((c) => c.remove());
+    const opts = [['any', 'Any distance'], ...[5, 10, 25, 50].filter((m) => m < state.miles).map((m) => [String(m), `Within ${m} miles`])];
+    for (const [value, label] of opts) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'chip';
+      b.dataset.filter = 'dist'; b.dataset.value = value;
+      b.setAttribute('aria-pressed', value === 'any' ? 'true' : 'false');
+      b.textContent = label;
+      distRow.appendChild(b);
+    }
+    syncChips();
+
+    const list = $('#trial-list');
+    list.innerHTML = '';
+    const ordered = [...state.trials].sort((a, b) => (a.nearest?.distance ?? 999) - (b.nearest?.distance ?? 999));
+    for (const t of ordered) list.appendChild(buildCard(t));
+    updateSummary();
+    applyFilters();
+    if (Object.keys(requestMap).length) startPolling();
+  }
+
+  function buildCard(t) {
+    const id = safeId(t.nctId);
+    const li = document.createElement('li');
+    li.className = 'card';
+    li.id = `card-${id}`;
+    li.dataset.nct = t.nctId;
+    li.dataset.fit = 'pending';
+    const phase = phaseText(t.phases);
+    const place = t.nearest ? [t.nearest.facility, t.nearest.city].filter(Boolean).join(', ') : 'Location not listed';
+    const cc = t.centralContact;
+    li.innerHTML = `
+      <article aria-labelledby="title-${id}">
+        <div class="card-top">
+          <span class="badge badge-pending" data-role="badge">${ICON.pending} ${FIT_LABEL.pending}</span>
+          ${t.remote ? `<span class="tag">${ICON.home} Remote or at-home parts mentioned</span>` : ''}
+          ${t.isSample ? '<span class="tag tag-sample">Sample study</span>' : ''}
+        </div>
+        <h2 class="card-title" id="title-${id}">${esc(t.title)}</h2>
+        <p class="card-meta">
+          <span>${ICON.pin} ${esc(distanceText(t))}</span>
+          <span>${esc(place)}${t.locationCount > 1 ? ` (+${t.locationCount - 1} more site${t.locationCount > 2 ? 's' : ''})` : ''}</span>
+          ${phase ? `<span>${esc(phase)}</span>` : ''}
+          ${t.url ? `<span><a href="${esc(t.url)}" target="_blank" rel="noopener">${esc(t.nctId)}<span class="sr-only"> (opens ClinicalTrials.gov in a new tab)</span></a></span>` : `<span>${esc(t.nctId)}</span>`}
+        </p>
+        <div class="card-summary" data-role="summary" aria-busy="true">
+          <span class="skeleton" style="width:95%"></span><span class="skeleton" style="width:88%"></span><span class="skeleton" style="width:60%"></span>
+          <span class="sr-only">Reviewing this study…</span>
+        </div>
+        <details class="why" data-role="why" hidden>
+          <summary>Why this might or might not fit</summary>
+          <div class="why-grid" data-role="why-body"></div>
+        </details>
+        <details class="questions" data-role="questions" hidden>
+          <summary>Questions to ask the study team</summary>
+          <ol data-role="questions-body"></ol>
+          ${cc && (cc.phone || cc.email) ? `<p class="contact-line">Study contact listed: ${esc([cc.name, cc.phone, cc.email].filter(Boolean).join(' · '))}</p>` : ''}
+        </details>
+        <div class="card-actions">
+          <div class="listen-group">
+            <label class="sr-only" for="lang-${id}">Listening language</label>
+            <select id="lang-${id}" class="lang-select"></select>
+            <button type="button" class="btn btn-secondary" data-role="listen" disabled aria-describedby="title-${id}">${ICON.speaker} <span>Listen</span></button>
+          </div>
+          <button type="button" class="btn btn-primary" data-role="contact" disabled aria-describedby="title-${id}">${ICON.send} <span>Contact this study</span></button>
+        </div>
+        <div class="readalong" data-role="readalong" hidden>
+          <p class="readalong-label">${ICON.speaker} Read along</p>
+          <p class="readalong-text" data-role="readalong-text"></p>
+          <div data-role="audio-slot"></div>
+          <p class="readalong-note" data-role="readalong-note"></p>
+        </div>
+        <div class="contact-status" data-role="contact-status" hidden aria-live="polite"></div>
+      </article>`;
+    fillLangSelect(li.querySelector('.lang-select'));
+    li.querySelector('[data-role=listen]').addEventListener('click', () => onListen(t, li));
+    li.querySelector('[data-role=contact]').addEventListener('click', () => openContact(t));
+    renderContactStatus(li, t.nctId);
+    return li;
+  }
+
+  function listHtml(items) {
+    return items.length ? `<ul>${items.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : '<p class="help">Nothing noted.</p>';
+  }
+
+  function applyMatch(t, m) {
+    const li = document.getElementById(`card-${safeId(t.nctId)}`);
+    if (!li) return;
+    li.dataset.fit = m.fit;
+    li.querySelector('[data-role=badge]').className = `badge badge-${m.fit}`;
+    li.querySelector('[data-role=badge]').innerHTML = `${ICON[m.fit]} ${FIT_LABEL[m.fit]}`;
+    const summary = li.querySelector('[data-role=summary]');
+    summary.removeAttribute('aria-busy');
+    summary.innerHTML = `<p>${esc(m.plain_summary)}</p>` +
+      (m.analyzed ? '' : '<p class="from-listing">We couldn\'t make a plain-language summary for this study, so this text comes from the study listing.</p>');
+    li.querySelector('[data-role=why-body]').innerHTML = `
+      <div class="why-for"><h4>${ICON.plus} Reasons it may fit</h4>${listHtml(m.reasons_for)}</div>
+      <div class="why-against"><h4>${ICON.minus} Reasons it may not</h4>${listHtml(m.reasons_against)}</div>
+      <div class="why-unknown"><h4>${ICON.question} Things the study team would check</h4>${listHtml(m.unknowns)}</div>`;
+    li.querySelector('[data-role=questions-body]').innerHTML = m.questions_to_ask.map((q) => `<li>${esc(q)}</li>`).join('');
+    li.querySelector('[data-role=why]').hidden = false;
+    li.querySelector('[data-role=questions]').hidden = false;
+    li.querySelector('[data-role=listen]').disabled = false;
+    if (!requestMap[t.nctId]) li.querySelector('[data-role=contact]').disabled = false;
+  }
+
+  // ---------- Matching (max 5 at a time) ----------
+  async function analyzeAll(runId) {
+    const queue = [...state.trials].sort((a, b) => (a.nearest?.distance ?? 999) - (b.nearest?.distance ?? 999));
+    let next = 0;
+    const worker = async () => {
+      while (next < queue.length) {
+        const t = queue[next++];
+        let m;
+        try {
+          m = await api('/api/match', { profile: state.profile, nctId: t.nctId });
+        } catch {
+          m = {
+            fit: 'possible', reasons_for: [], reasons_against: [], unknowns: ['Could not analyze automatically'],
+            plain_summary: (t.briefSummary || 'This study did not include a summary.').slice(0, 600),
+            questions_to_ask: ['Based on my health history, could this study be a good fit for me?', 'How many visits are there, and can any of them be done from home?', 'Is there payment or help with travel costs?'],
+            analyzed: false,
+          };
+        }
+        if (runId !== state.runId) return;
+        state.matches[t.nctId] = m;
+        applyMatch(t, m);
+        updateSummary();
+        applyFilters();
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(5, queue.length) }, worker));
+    if (runId !== state.runId) return;
+    state.analysisDone = true;
+    sortCards(); // sort once at the end so cards don't jump while someone is reading
+    updateSummary();
+  }
+
+  function sortCards() {
+    const list = $('#trial-list');
+    const cards = $$('.card', list);
+    cards.sort((a, b) => {
+      const fa = FIT_RANK[a.dataset.fit], fb = FIT_RANK[b.dataset.fit];
+      if (fa !== fb) return fa - fb;
+      const ta = state.trials.find((t) => t.nctId === a.dataset.nct);
+      const tb = state.trials.find((t) => t.nctId === b.dataset.nct);
+      return (ta.nearest?.distance ?? 999) - (tb.nearest?.distance ?? 999);
+    });
+    cards.forEach((c) => list.appendChild(c));
+  }
+
+  function updateSummary() {
+    const total = state.trials.length;
+    const done = Object.keys(state.matches).length;
+    const good = Object.values(state.matches).filter((m) => m.fit === 'likely').length;
+    const title = $('#summary-title');
+    const first = `${plural(total, 'recruiting trial', 'recruiting trials')} within ${state.miles} miles`;
+    title.textContent = done < total
+      ? `${first}; reviewing…`
+      : `${first}; ${good} may be a good fit`;
+    const where = state.originLabel ? `Near ${state.originLabel}. ` : '';
+    $('#summary-sub').textContent = total === 0
+      ? `${where}Try a larger travel distance or a different condition.`
+      : done < total
+        ? `${where}Reviewing ${done} of ${total} studies against your answers…`
+        : `${where}All studies reviewed. Sorted by fit, then distance.`;
+    const pct = total ? Math.round((done / total) * 100) : 100;
+    $('#progress-fill').style.width = `${pct}%`;
+    $('#progress').setAttribute('aria-valuenow', String(pct));
+    $('#progress').hidden = done >= total;
+  }
+
+  // ---------- Filters ----------
+  document.addEventListener('click', (e) => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    const f = chip.dataset.filter;
+    if (f === 'remote') state.filters.remote = !state.filters.remote;
+    else state.filters[f] = chip.dataset.value;
+    syncChips();
+    applyFilters();
+  });
+  $('#clear-filters').addEventListener('click', () => {
+    state.filters = { fit: 'all', dist: 'any', remote: false };
+    syncChips();
+    applyFilters();
+  });
+
+  function syncChips() {
+    $$('.chip').forEach((c) => {
+      const f = c.dataset.filter;
+      const on = f === 'remote' ? state.filters.remote : state.filters[f] === c.dataset.value;
+      c.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
+
+  function applyFilters() {
+    let shown = 0;
+    for (const li of $$('#trial-list .card')) {
+      const t = state.trials.find((x) => x.nctId === li.dataset.nct);
+      const fit = li.dataset.fit;
+      let ok = true;
+      if (state.filters.fit !== 'all' && fit !== state.filters.fit) ok = false;
+      if (state.filters.dist !== 'any') {
+        const d = t.nearest?.distance;
+        if (d == null || d > Number(state.filters.dist)) ok = false;
+      }
+      if (state.filters.remote && !t.remote) ok = false;
+      li.hidden = !ok;
+      if (ok) shown++;
+    }
+    $('#empty-filter').hidden = shown > 0 || state.trials.length === 0;
+  }
+
+  $('#new-search').addEventListener('click', () => {
+    state.runId++;
+    stopPlayback();
+    showScreen('screen-intake');
+  });
+  $('#crisis-back').addEventListener('click', () => {
+    form.reset();
+    $('#persona').value = '';
+    state.runId++;
+    showScreen('screen-intake');
+  });
+
+  // ---------- Listen (translate + speak) ----------
+  function stopPlayback() {
+    if (activePlayback) { activePlayback.stop(); activePlayback = null; }
+  }
+
+  function setListenBtn(li, mode) {
+    const b = li.querySelector('[data-role=listen]');
+    b.disabled = mode === 'loading';
+    b.innerHTML = mode === 'playing' ? `${ICON.stop} <span>Stop</span>`
+      : mode === 'loading' ? `${ICON.speaker} <span>Preparing…</span>`
+      : `${ICON.speaker} <span>Listen</span>`;
+  }
+
+  async function onListen(t, li) {
+    if (activePlayback && activePlayback.li === li) { stopPlayback(); return; }
+    stopPlayback();
+    const m = state.matches[t.nctId];
+    if (!m) return;
+    const lang = sessionLang;
+    const where = t.nearest && t.nearest.facility
+      ? ` The closest study location is ${t.nearest.facility}${t.nearest.city ? ` in ${t.nearest.city}` : ''}${t.nearest.distance != null ? `, about ${Math.max(1, Math.round(t.nearest.distance))} miles away` : ''}.`
+      : '';
+    const text = `${m.plain_summary}${where}`;
+
+    setListenBtn(li, 'loading');
+    const panel = li.querySelector('[data-role=readalong]');
+    const textEl = li.querySelector('[data-role=readalong-text]');
+    const note = li.querySelector('[data-role=readalong-note]');
+    const slot = li.querySelector('[data-role=audio-slot]');
+    let data;
+    try {
+      data = await api('/api/speak', { text, language: lang });
+    } catch (e) {
+      setListenBtn(li, 'idle');
+      panel.hidden = false;
+      textEl.textContent = '';
+      note.textContent = `Sorry, we couldn't prepare the audio: ${e.message}`;
+      return;
+    }
+
+    const shownLang = data.language || 'en';
+    textEl.textContent = data.translated;
+    textEl.lang = LANG_TAG[shownLang];
+    textEl.dir = shownLang === 'ar' ? 'rtl' : 'ltr';
+    note.textContent = data.translationOk === false ? "Translation isn't available right now, so this is in English." : '';
+    slot.innerHTML = '';
+    panel.hidden = false;
+
+    if (data.audio) {
+      const audio = document.createElement('audio');
+      audio.controls = true;
+      audio.src = `data:audio/mpeg;base64,${data.audio}`;
+      audio.setAttribute('aria-label', 'Audio summary');
+      slot.appendChild(audio);
+      const onEnd = () => { if (activePlayback && activePlayback.li === li) activePlayback = null; setListenBtn(li, 'idle'); };
+      audio.addEventListener('ended', onEnd);
+      audio.addEventListener('pause', () => { if (!audio.ended) onEnd(); });
+      audio.addEventListener('play', () => {
+        if (activePlayback && activePlayback.li !== li) stopPlayback();
+        activePlayback = { li, stop: () => { audio.pause(); setListenBtn(li, 'idle'); } };
+        setListenBtn(li, 'playing');
+      });
+      audio.play().catch(() => {
+        setListenBtn(li, 'idle');
+        note.textContent = 'Press play to listen.';
+      });
+    } else if ('speechSynthesis' in window) {
+      const u = new SpeechSynthesisUtterance(data.translated);
+      u.lang = SPEECH_TAG[shownLang];
+      const voice = speechSynthesis.getVoices().find((v) => v.lang && v.lang.toLowerCase().startsWith(SPEECH_TAG[shownLang].slice(0, 2)));
+      if (voice) u.voice = voice;
+      u.onend = u.onerror = () => { if (activePlayback && activePlayback.li === li) activePlayback = null; setListenBtn(li, 'idle'); };
+      activePlayback = { li, stop: () => { speechSynthesis.cancel(); setListenBtn(li, 'idle'); } };
+      speechSynthesis.cancel();
+      speechSynthesis.speak(u);
+      setListenBtn(li, 'playing');
+      note.textContent = (note.textContent + " Using your device's built-in voice because our audio service isn't available.").trim();
+    } else {
+      setListenBtn(li, 'idle');
+      note.textContent = (note.textContent + " Audio isn't available right now, but you can read the text above.").trim();
+    }
+  }
+  if ('speechSynthesis' in window) speechSynthesis.getVoices(); // warm up voice list
+
+  // ---------- Contact this study (human in the loop) ----------
+  const dialog = $('#contact-dialog');
+  const consent = $('#cd-consent');
+
+  function openContact(t) {
+    const m = state.matches[t.nctId];
+    if (!m) return;
+    state.dialogTrial = t;
+    const p = state.profile;
+    $('#cd-trial').textContent = t.title;
+    $('#cd-prescreen').innerHTML = `
+      <h3>About you</h3>
+      <dl>
+        <dt>Condition</dt><dd>${esc(p.condition)}</dd>
+        <dt>Age</dt><dd>${esc(p.age)}</dd>
+        <dt>Sex</dt><dd>${esc(SEX_LABEL[p.sex] || 'Not specified')}</dd>
+        <dt>ZIP code</dt><dd>${esc(p.zip)}</dd>
+        <dt>In your words</dt><dd>${esc(p.freeText || 'Not provided')}</dd>
+      </dl>
+      <h3>Software pre-screen: <span class="badge badge-${m.fit}">${ICON[m.fit]} ${FIT_LABEL[m.fit]}</span></h3>
+      <h3>Reasons it may fit</h3>${listHtml(m.reasons_for)}
+      <h3>Reasons it may not</h3>${listHtml(m.reasons_against)}
+      <h3>Things the study team would check</h3>${listHtml(m.unknowns)}`;
+    $('#cd-name').value = state.contact.name || '';
+    $('#cd-reach').value = state.contact.reach || '';
+    $('#cd-lang').textContent = LANG_NAME[sessionLang];
+    consent.checked = false;
+    $('#cd-send').disabled = true;
+    $('#cd-error').textContent = '';
+    dialog.showModal();
+    $('#cd-name').focus();
+  }
+
+  consent.addEventListener('change', () => { $('#cd-send').disabled = !consent.checked; });
+  $('#cd-cancel').addEventListener('click', () => dialog.close());
+  dialog.addEventListener('close', () => {
+    const t = state.dialogTrial;
+    if (!t) return;
+    const li = document.getElementById(`card-${safeId(t.nctId)}`);
+    const target = li && (li.querySelector('[data-role=contact]:not(:disabled)') || li.querySelector('[data-role=contact-status]'));
+    if (target) { if (!target.hasAttribute('tabindex') && target.tagName !== 'BUTTON') target.setAttribute('tabindex', '-1'); target.focus(); }
+  });
+
+  $('#contact-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const t = state.dialogTrial;
+    const err = $('#cd-error');
+    if (!consent.checked) { err.textContent = 'Please tick the consent box first.'; return; }
+    const reach = $('#cd-reach').value.trim();
+    if (!reach) { err.textContent = 'Please add a phone number or email so the team can reach you.'; $('#cd-reach').focus(); return; }
+    $('#cd-send').disabled = true;
+    try {
+      const r = await api('/api/contact', {
+        nctId: t.nctId,
+        profile: state.profile,
+        match: state.matches[t.nctId],
+        contact: { name: $('#cd-name').value.trim(), reach, language: sessionLang },
+        consent: true,
+      });
+      state.contact = { name: $('#cd-name').value.trim(), reach };
+      requestMap[t.nctId] = { id: r.id, status: r.status };
+      sessionStorage.setItem('tf_requests', JSON.stringify(requestMap));
+      const li = document.getElementById(`card-${safeId(t.nctId)}`);
+      renderContactStatus(li, t.nctId);
+      dialog.close();
+      startPolling();
+    } catch (ex) {
+      err.textContent = `Sorry, we couldn't send this: ${ex.message}`;
+      $('#cd-send').disabled = false;
+    }
+  });
+
+  function renderContactStatus(li, nctId) {
+    if (!li) return;
+    const req = requestMap[nctId];
+    const box = li.querySelector('[data-role=contact-status]');
+    const btn = li.querySelector('[data-role=contact]');
+    if (!req) { box.hidden = true; return; }
+    btn.disabled = true;
+    btn.innerHTML = `${ICON.send} <span>Request sent</span>`;
+    box.hidden = false;
+    if (req.status === 'approved') {
+      box.className = 'contact-status status-approved';
+      box.innerHTML = `${ICON.phone}<div><p>Study team will reach out</p><p class="sub">They'll contact you to talk about whether this study is right for you. This is not an enrollment decision, and you can always say no.</p></div>`;
+    } else if (req.status === 'declined') {
+      box.className = 'contact-status status-declined';
+      box.innerHTML = `${ICON.info}<div><p>The study team reviewed your request</p><p class="sub">They think this study may not be the right match. Other studies might be, and you can also ask your doctor about research options.</p></div>`;
+    } else {
+      box.className = 'contact-status status-sent';
+      box.innerHTML = `${ICON.send}<div><p>Sent to study team</p><p class="sub">A study coordinator will review your request.</p></div>`;
+    }
+  }
+
+  function startPolling() {
+    if (pollTimer) return;
+    pollTimer = setInterval(async () => {
+      const pending = Object.entries(requestMap).filter(([, r]) => r.status === 'sent');
+      if (!pending.length) { clearInterval(pollTimer); pollTimer = null; return; }
+      try {
+        const { statuses } = await api(`/api/requests/status?ids=${pending.map(([, r]) => r.id).join(',')}`);
+        let changed = false;
+        for (const [nctId, r] of pending) {
+          const s = statuses[r.id];
+          if (s && s !== 'unknown' && s !== r.status) { r.status = s; changed = true; renderContactStatus(document.getElementById(`card-${safeId(nctId)}`), nctId); }
+        }
+        if (changed) sessionStorage.setItem('tf_requests', JSON.stringify(requestMap));
+      } catch { /* try again next tick */ }
+    }, 3000);
+  }
+})();
+</script>
+</body>
+</html>

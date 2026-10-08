@@ -1,0 +1,16 @@
+{
+  "name": "trialfinder",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Hackathon prototype: helps patients find recruiting clinical trials near them, explained in plain language.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}

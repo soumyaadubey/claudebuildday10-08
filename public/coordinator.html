@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coordinator view · TrialFinder</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%230E6B66'/%3E%3Cpath d='M9 17l4.5 4.5L23 11' stroke='%23fff' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #FBF6EE; --surface: #fff; --surface-warm: #FFF9F1; --ink: #1E2430; --muted: #4A5160; --border: #E2D7C7;
+    --primary: #0E6B66; --primary-hover: #0A5450; --primary-soft: #E3F1EF; --focus: #1D4ED8;
+    --likely-bg: #DDF3E4; --likely-ink: #14532D; --likely-border: #7FC296;
+    --possible-bg: #FDEFD3; --possible-ink: #6B3B00; --possible-border: #E2B25C;
+    --unlikely-bg: #EDEBE7; --unlikely-ink: #3A3A40; --unlikely-border: #C4BFB7;
+    --radius: 14px; --shadow: 0 1px 2px rgba(30,36,48,.06), 0 4px 16px rgba(30,36,48,.06);
+  }
+  * { box-sizing: border-box; }
+  html { font-size: 18px; }
+  body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif; line-height: 1.6; }
+  h1, h2, h3 { line-height: 1.25; margin: 0 0 .5rem; }
+  h1 { font-size: 1.8rem; } h2 { font-size: 1.2rem; } h3 { font-size: 1rem; margin-top: 1rem; }
+  p { margin: 0 0 .8rem; }
+  a { color: var(--primary); text-underline-offset: 3px; }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: 6px; }
+  [hidden] { display: none !important; }
+  svg.icon { width: 1.15em; height: 1.15em; flex: none; vertical-align: -0.2em; }
+  .wrap { width: 100%; max-width: 1000px; margin: 0 auto; padding: 0 1.25rem; }
+  .site-header { background: var(--surface); border-bottom: 1px solid var(--border); }
+  .site-header .wrap { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding-top: .8rem; padding-bottom: .8rem; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: .6rem; font-weight: 750; font-size: 1.25rem; color: var(--ink); text-decoration: none; }
+  .role-tag { background: #1E2430; color: #fff; border-radius: 999px; padding: .15rem .7rem; font-size: .8rem; font-weight: 700; }
+  main { flex: 1; padding: 2rem 0 3rem; }
+  .site-footer { background: #F3ECE1; border-top: 1px solid var(--border); padding: 1.1rem 0; font-size: .95rem; }
+  .site-footer p { margin: 0; font-weight: 600; }
+  .intro { background: var(--surface); border: 1px solid var(--border); border-left: 6px solid var(--primary); border-radius: var(--radius); padding: 1rem 1.3rem; margin-bottom: 1.5rem; box-shadow: var(--shadow); }
+  .intro p:last-child { margin: 0; }
+  .list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 1.2rem; }
+  .req { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.3rem 1.4rem; }
+  .req-top { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; justify-content: space-between; margin-bottom: .6rem; }
+  .muted { color: var(--muted); font-size: .92rem; }
+  .status { display: inline-flex; align-items: center; gap: .4rem; border-radius: 999px; padding: .2rem .8rem; font-weight: 700; font-size: .92rem; border: 2px solid; }
+  .status-sent { background: #EAF1FB; color: #1E3A6E; border-color: #9DB9E6; }
+  .status-approved { background: var(--likely-bg); color: var(--likely-ink); border-color: var(--likely-border); }
+  .status-declined { background: var(--unlikely-bg); color: var(--unlikely-ink); border-color: var(--unlikely-border); }
+  .badge { display: inline-flex; align-items: center; gap: .4rem; padding: .2rem .75rem; border-radius: 999px; font-weight: 750; font-size: .92rem; border: 2px solid; }
+  .badge-likely { background: var(--likely-bg); color: var(--likely-ink); border-color: var(--likely-border); }
+  .badge-possible { background: var(--possible-bg); color: var(--possible-ink); border-color: var(--possible-border); }
+  .badge-unlikely { background: var(--unlikely-bg); color: var(--unlikely-ink); border-color: var(--unlikely-border); }
+  .tag-sample { background: #FFF1C2; color: #5C4200; border-radius: 999px; padding: .1rem .6rem; font-size: .85rem; font-weight: 650; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-top: .6rem; }
+  .box { background: var(--surface-warm); border: 1px solid #EAD9C2; border-radius: 12px; padding: .9rem 1.1rem; }
+  .box h3:first-child { margin-top: 0; }
+  dl { display: grid; grid-template-columns: max-content 1fr; gap: .15rem .9rem; margin: 0; }
+  dt { font-weight: 650; } dd { margin: 0; }
+  ul { margin: 0; padding-left: 1.2rem; }
+  .consent { display: flex; gap: .5rem; align-items: center; margin: 1rem 0 0; color: var(--likely-ink); font-weight: 600; }
+  .actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); align-items: center; }
+  .btn { display: inline-flex; align-items: center; gap: .5rem; min-height: 48px; padding: .6rem 1.2rem; border-radius: 999px; border: 2px solid transparent; font: inherit; font-weight: 650; cursor: pointer; }
+  .btn:disabled { opacity: .55; cursor: not-allowed; }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+  .btn-secondary { background: #fff; color: var(--ink); border-color: #9C9389; }
+  .btn-secondary:hover:not(:disabled) { background: #F5F1EA; }
+  .empty { text-align: center; padding: 2.5rem 1rem; background: var(--surface); border: 1px dashed var(--border); border-radius: var(--radius); }
+  @media (max-width: 720px) { .cols { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="/">
+      <svg width="36" height="36" viewBox="0 0 40 40" aria-hidden="true">
+        <circle cx="20" cy="20" r="19" fill="#0E6B66"/>
+        <circle cx="18" cy="18" r="8.5" fill="none" stroke="#FBF6EE" stroke-width="3"/>
+        <path d="M24.5 24.5l6 6" stroke="#FBF6EE" stroke-width="3.4" stroke-linecap="round"/>
+        <path d="M14.5 18.2l2.6 2.6 4.6-5" stroke="#F2B48C" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      TrialFinder <span class="role-tag">Coordinator</span>
+    </a>
+    <a href="/">Back to patient view</a>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <h1>Contact requests</h1>
+    <div class="intro">
+      <p>Each request below was sent by a patient who ticked the consent box. The fit analysis was written by software and is <strong>not</strong> a medical or eligibility judgment.</p>
+      <p><strong>"Approve and contact patient"</strong> means your team will reach out to begin formal screening. It is not an enrollment decision.</p>
+    </div>
+    <p class="muted" aria-live="polite" id="live-status">Checking for new requests…</p>
+    <ul class="list" id="list" aria-label="Contact requests"></ul>
+    <div class="empty" id="empty" hidden>
+      <p><strong>No requests yet.</strong></p>
+      <p class="muted">When a patient presses "Contact this study" and consents, their request appears here automatically.</p>
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap"><p>TrialFinder is software, not a doctor. It does not diagnose or decide eligibility. All patient data in this demo is synthetic.</p></div>
+</footer>
+
+<script>
+(() => {
+  'use strict';
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const FIT_LABEL = { likely: 'May be a good fit', possible: 'Possible fit', unlikely: 'Probably not' };
+  const FIT_ICON = {
+    likely: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M7 12.5l3.2 3.2L17 9" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    possible: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12 3a9 9 0 010 18z" fill="currentColor"/></svg>',
+    unlikely: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M7.5 12h9" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>',
+  };
+  const STATUS = {
+    sent: ['status-sent', '●', 'New: waiting for review'],
+    approved: ['status-approved', '✓', 'Approved: team will contact patient'],
+    declined: ['status-declined', '–', 'Marked not a fit'],
+  };
+  const LANG = { en: 'English', es: 'Spanish', zh: 'Mandarin Chinese', ru: 'Russian', ko: 'Korean', ar: 'Arabic', hi: 'Hindi' };
+  const SEX = { female: 'Female', male: 'Male', other: 'Not specified' };
+  const list = document.getElementById('list');
+  let lastJson = '';
+
+  const ul = (items) => (items && items.length ? `<ul>${items.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : '<p class="muted">None noted.</p>');
+  const time = (iso) => new Date(iso).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+
+  function render(requests) {
+    document.getElementById('empty').hidden = requests.length > 0;
+    list.innerHTML = requests.map((r) => {
+      const [cls, mark, label] = STATUS[r.status] || STATUS.sent;
+      const m = r.match || {};
+      const t = r.trial || {};
+      const p = r.profile || {};
+      const c = r.contact || {};
+      const near = t.nearest ? [t.nearest.facility, t.nearest.city].filter(Boolean).join(', ') + (t.nearest.distance != null ? ` · ${t.nearest.distance} mi from patient` : '') : '';
+      const decided = r.status !== 'sent';
+      return `
+      <li class="req" id="req-${esc(r.id)}">
+        <article aria-labelledby="t-${esc(r.id)}">
+          <div class="req-top">
+            <span class="status ${cls}" tabindex="-1" data-status><span aria-hidden="true">${mark}</span> ${esc(label)}</span>
+            <span class="muted">Received ${esc(time(r.createdAt))}</span>
+          </div>
+          <h2 id="t-${esc(r.id)}">${esc(t.title)}</h2>
+          <p class="muted">${esc(t.nctId)}${t.isSample ? ' · <span class="tag-sample">Sample study</span>' : ''}${near ? ` · ${esc(near)}` : ''}</p>
+          <div class="cols">
+            <div class="box">
+              <h3>Patient (synthetic)</h3>
+              <dl>
+                <dt>Name</dt><dd>${esc(c.name || 'Not given')}</dd>
+                <dt>Reach at</dt><dd>${esc(c.reach || 'Not given')}</dd>
+                <dt>Language</dt><dd>${esc(LANG[c.language] || 'English')}</dd>
+                <dt>Condition</dt><dd>${esc(p.condition)}</dd>
+                <dt>Age / sex</dt><dd>${esc(p.age)} · ${esc(SEX[p.sex] || 'Not specified')}</dd>
+                <dt>ZIP</dt><dd>${esc(p.zip)}</dd>
+              </dl>
+              <h3>In their own words</h3>
+              <p>${esc(p.freeText || 'Not provided')}</p>
+            </div>
+            <div class="box">
+              <h3>Software pre-screen <span class="badge badge-${esc(m.fit)}">${FIT_ICON[m.fit] || ''} ${esc(FIT_LABEL[m.fit] || 'Unknown')}</span></h3>
+              <h3>Reasons it may fit</h3>${ul(m.reasons_for)}
+              <h3>Reasons it may not</h3>${ul(m.reasons_against)}
+              <h3>To check during screening</h3>${ul(m.unknowns)}
+            </div>
+          </div>
+          <p class="consent"><span aria-hidden="true">✓</span> Patient consented to share this information on ${esc(time(r.consentAt))}.</p>
+          <div class="actions">
+            <button type="button" class="btn btn-primary" data-id="${esc(r.id)}" data-decision="approve" ${decided ? 'disabled' : ''}>Approve and contact patient</button>
+            <button type="button" class="btn btn-secondary" data-id="${esc(r.id)}" data-decision="decline" ${decided ? 'disabled' : ''}>Not a fit</button>
+            ${decided ? `<span class="muted">Decided ${esc(time(r.decidedAt))}</span>` : ''}
+          </div>
+        </article>
+      </li>`;
+    }).join('');
+  }
+
+  async function refresh() {
+    try {
+      const res = await fetch('/api/requests');
+      const { requests } = await res.json();
+      const json = JSON.stringify(requests);
+      if (json !== lastJson) { lastJson = json; render(requests); } // don't steal focus when nothing changed
+      const waiting = requests.filter((r) => r.status === 'sent').length;
+      document.getElementById('live-status').textContent =
+        `${requests.length} request${requests.length === 1 ? '' : 's'}, ${waiting} waiting for review. Updates automatically.`;
+    } catch {
+      document.getElementById('live-status').textContent = "Can't reach the server right now. Retrying…";
+    }
+  }
+
+  list.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button[data-decision]');
+    if (!btn) return;
+    const id = btn.dataset.id;
+    btn.closest('.actions').querySelectorAll('button').forEach((b) => { b.disabled = true; });
+    try {
+      await fetch(`/api/requests/${encodeURIComponent(id)}/decision`, {
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ decision: btn.dataset.decision }),
+      });
+    } finally {
+      await refresh();
+      const s = document.querySelector(`#req-${CSS.escape(id)} [data-status]`);
+      if (s) s.focus();
+    }
+  });
+
+  refresh();
+  setInterval(refresh, 3000);
+})();
+</script>
+</body>
+</html>
