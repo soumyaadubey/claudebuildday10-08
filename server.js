@@ -11,7 +11,12 @@ const express = require('express');
 loadDotEnv();
 
 const PORT = Number(process.env.PORT) || 3000;
-const MODEL = 'claude-opus-5-5';
+// Sonnet where judgment and safety matter; Haiku for fast, simple translation.
+const MODELS = {
+  crisis: process.env.CRISIS_MODEL || 'claude-sonnet-5-5',
+  match: process.env.MATCH_MODEL || 'claude-sonnet-5-5',
+  translate: process.env.TRANSLATE_MODEL || 'claude-haiku-5-5',
+};
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
 const ELEVEN_URL = 'https://api.elevenlabs.io/v1/text-to-speech/21m00Tcm4TlvDq8ikWAM';
 const CT_URL = 'https://clinicaltrials.gov/api/v2/studies';
@@ -158,12 +163,12 @@ function lookupZip(zip) {
 // ---------------------------------------------------------------------------
 // Anthropic
 // ---------------------------------------------------------------------------
-async function callClaude({ system, prompt, maxTokens = 4000, effort = 'low', timeoutMs = 60000 }) {
+async function callClaude({ model, system, prompt, maxTokens = 4000, effort = 'low', timeoutMs = 60000 }) {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) throw new Error('ANTHROPIC_API_KEY is not set');
 
   const body = JSON.stringify({
-    model: MODEL,
+    model,
     max_tokens: maxTokens,
     system,
     output_config: { effort },
@@ -249,6 +254,7 @@ async function checkCrisis(profile) {
   }
   try {
     const out = await callClaude({
+      model: MODELS.crisis,
       system: CRISIS_SYSTEM,
       prompt: `<condition_field>${profile.condition}</condition_field>\n<own_words>${text}</own_words>`,
       maxTokens: 2000,
@@ -536,7 +542,7 @@ function firstSentences(text, n) {
   return parts.slice(0, n).map((p) => p.trim()).join(' ').slice(0, 700);
 }
 
-// Used when Opus is unavailable or its output can't be parsed.
+// Used when Claude is unavailable or its output can't be parsed.
 function fallbackMatch(trial, profile) {
   const against = [];
   const minY = ageToYears(trial.minAge);
@@ -564,6 +570,7 @@ function matchTrial(profile, trial) {
   const job = matchLimit(async () => {
     try {
       const text = await callClaude({
+        model: MODELS.match,
         system: MATCH_SYSTEM,
         prompt: buildMatchPrompt(profile, trial),
         maxTokens: 8000,
@@ -597,6 +604,7 @@ async function translate(text, lang) {
   const key = `${lang}::${text}`;
   if (translationCache.has(key)) return translationCache.get(key);
   const out = await callClaude({
+    model: MODELS.translate,
     system: translateSystem(LANGUAGES[lang]),
     prompt: text,
     maxTokens: 4000,
@@ -641,6 +649,7 @@ app.get('/api/health', (req, res) => {
     anthropic: !!process.env.ANTHROPIC_API_KEY,
     elevenlabs: !!process.env.ELEVENLABS_API_KEY,
     forceSample: FORCE_SAMPLE,
+    models: MODELS,
   });
 });
 
@@ -760,6 +769,7 @@ app.use((err, req, res, next) => {
 const server = app.listen(PORT, () => {
   console.log(`TrialFinder running at http://localhost:${PORT}`);
   console.log(`Coordinator view:   http://localhost:${PORT}/coordinator.html`);
+  console.log(`Models: crisis=${MODELS.crisis}, match=${MODELS.match}, translate=${MODELS.translate}`);
   if (!process.env.ANTHROPIC_API_KEY) console.warn('! ANTHROPIC_API_KEY not set: crisis check uses keywords, matching shows "Could not analyze automatically".');
   if (!process.env.ELEVENLABS_API_KEY) console.warn("! ELEVENLABS_API_KEY not set: Listen falls back to the browser's built-in voice.");
   if (FORCE_SAMPLE) console.warn('! FORCE_SAMPLE=1: using data/sample_trials.json instead of ClinicalTrials.gov.');

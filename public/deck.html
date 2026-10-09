@@ -274,7 +274,7 @@
         </div>
       </div>
     </div>
-    <div class="slide-foot"><span>Claude Build Day · October 8, 2026</span><span>Built with Claude Opus 5.5 · ElevenLabs · ClinicalTrials.gov</span></div>
+    <div class="slide-foot"><span>Claude Build Day · October 8, 2026</span><span>Built with Claude Sonnet 5.5 &amp; Haiku 5.5 · ElevenLabs · ClinicalTrials.gov</span></div>
     <div class="notes">Hi, we built TrialFinder. It helps patients find clinical trials near them that they may be a good fit for, explains each one in plain language, and lets them listen in their own language. Keep this to one sentence and move on.</div>
   </section>
 
@@ -334,7 +334,7 @@
     </div>
     <div class="flow-safety"><svg aria-hidden="true"><use href="#i-heart"/></svg><span><strong>Before any of this:</strong> a safety check reads what you wrote. If you might be in crisis, we stop and connect you to 988.</span></div>
     <div class="slide-foot"><span class="mini-brand"><svg class="icon" aria-hidden="true"><use href="#i-logo"/></svg> TrialFinder</span><span>4</span></div>
-    <div class="notes">Here's the flow. The patient tells us about themselves, including in their own words. We search ClinicalTrials.gov live for recruiting studies near them. Claude Opus reads each study's eligibility criteria against their profile. Then they can listen in their language and, if they want, contact the study. And before any of that, a safety check runs first.</div>
+    <div class="notes">Here's the flow. The patient tells us about themselves, including in their own words. We search ClinicalTrials.gov live for recruiting studies near them. Claude reads each study's eligibility criteria against their profile. Then they can listen in their language and, if they want, contact the study. And before any of that, a safety check runs first.</div>
   </section>
 
   <!-- 5. Dashboard -->
@@ -457,14 +457,14 @@
       <div class="box server"><h3>Node + Express server</h3><p>Crisis check → search → match 5 trials at a time → translate → speak. Results cached in memory.</p><span class="key"><svg class="icon" aria-hidden="true"><use href="#i-shield"/></svg> API keys live only here</span></div>
       <div class="arrow" aria-hidden="true"></div>
       <div class="ext">
-        <div class="box"><h3>Claude Opus 5.5</h3><p>Crisis classifier, fit analysis, translation</p></div>
+        <div class="box"><h3>Claude Sonnet 5.5 + Haiku 5.5</h3><p>Sonnet: crisis check, fit analysis. Haiku: translation</p></div>
         <div class="box"><h3>ClinicalTrials.gov API v2</h3><p>Recruiting studies by condition and distance</p></div>
         <div class="box"><h3>ElevenLabs Flash v2.5</h3><p>Natural multilingual voice</p></div>
       </div>
     </div>
     <div class="stats"><div><strong>1</strong>dependency (Express)</div><div><strong>7</strong>languages</div><div><strong>~140</strong>NYC ZIP codes bundled</div><div><strong>0</strong>real patient data</div></div>
     <div class="slide-foot"><span class="mini-brand"><svg class="icon" aria-hidden="true"><use href="#i-logo"/></svg> TrialFinder</span><span>10</span></div>
-    <div class="notes">Technically it's deliberately simple: one static page and a small Express server. All the API keys stay on the server. Claude Opus 5.5 does three jobs: the crisis classifier, the eligibility analysis in strict JSON, and translation. The only dependency is Express.</div>
+    <div class="notes">Technically it's deliberately simple: one static page and a small Express server. All the API keys stay on the server. Claude does three jobs: Sonnet 5.5 runs the crisis classifier and the eligibility analysis in strict JSON, and Haiku 5.5 handles translation because it is fast. The only dependency is Express.</div>
   </section>
 
   <!-- 11. Demo -->

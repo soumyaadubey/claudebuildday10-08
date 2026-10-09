@@ -2,6 +2,7 @@
   "name": "trialfinder",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "description": "Hackathon prototype: helps patients find recruiting clinical trials near them, explained in plain language.",
   "main": "server.js",
   "scripts": {
