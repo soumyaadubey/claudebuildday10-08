@@ -404,6 +404,35 @@ async function searchTrials(condition, origin, miles) {
   }
 }
 
+// Look up a trial from an earlier search. On serverless hosts (Vercel) the request
+// may land on a fresh instance with an empty store, so re-fetch it by ID instead of failing.
+async function getTrial(nctId, profile) {
+  if (trialStore.has(nctId)) return trialStore.get(nctId);
+  const origin = lookupZip(profile.zip);
+  let trial = null;
+  const sample = SAMPLE_TRIALS.find((t) => t.nctId === nctId);
+  if (sample) {
+    trial = finalizeTrial({ ...sample, isSample: true }, origin);
+  } else if (/^NCT\d{8}$/.test(nctId)) {
+    try {
+      const raw = await timedFetch(
+        `${CT_URL}/${nctId}`,
+        { headers: { accept: 'application/json', 'user-agent': 'TrialFinder-hackathon-demo/0.1' } },
+        8000,
+        async (res) => {
+          if (!res.ok) throw new Error(`ClinicalTrials.gov ${res.status}`);
+          return res.json();
+        }
+      );
+      trial = normalizeStudy(raw, origin);
+    } catch (e) {
+      console.warn(`[trial] could not re-fetch ${nctId}:`, e.name === 'AbortError' ? 'timeout (8s)' : e.message);
+    }
+  }
+  if (trial && trial.nctId) trialStore.set(nctId, trial);
+  return trial && trial.nctId ? trial : null;
+}
+
 // What the browser gets: everything except the long eligibility text.
 function publicTrial(t) {
   const { eligibility, ...rest } = t;
@@ -642,7 +671,7 @@ app.post('/api/search', async (req, res) => {
 // Step 3: one trial at a time (the browser runs up to 5 in parallel; the server also caps at 5).
 app.post('/api/match', async (req, res) => {
   const profile = sanitizeProfile(req.body && req.body.profile);
-  const trial = trialStore.get(str(req.body && req.body.nctId, 40));
+  const trial = await getTrial(str(req.body && req.body.nctId, 40), profile);
   if (!trial) return res.status(404).json({ error: 'Unknown trial. Please search again.' });
   res.json(await matchTrial(profile, trial));
 });
@@ -674,13 +703,13 @@ app.post('/api/speak', async (req, res) => {
 });
 
 // Human in the loop: patient -> coordinator queue.
-app.post('/api/contact', (req, res) => {
+app.post('/api/contact', async (req, res) => {
   const b = req.body || {};
   if (b.consent !== true) return res.status(400).json({ error: 'Please tick the consent box before sending.' });
-  const trial = trialStore.get(str(b.nctId, 40));
+  const profile = sanitizeProfile(b.profile);
+  const trial = await getTrial(str(b.nctId, 40), profile);
   if (!trial) return res.status(404).json({ error: 'Unknown trial. Please search again.' });
 
-  const profile = sanitizeProfile(b.profile);
   const match = matchCache.get(`${profileHash(profile)}:${trial.nctId}`) || normalizeMatch(b.match) || fallbackMatch(trial, profile);
   const now = new Date().toISOString();
   const request = {
